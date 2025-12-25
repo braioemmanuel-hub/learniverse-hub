@@ -79,11 +79,11 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/student">
-              <Button variant="ghost" size="sm">Student Login</Button>
+            <Link to="/auth">
+              <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
-            <Link to="/admin">
-              <Button variant="default" size="sm">Admin Portal</Button>
+            <Link to="/auth">
+              <Button variant="default" size="sm">Get Started</Button>
             </Link>
           </div>
         </div>
