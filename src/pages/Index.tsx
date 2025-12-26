@@ -1,39 +1,22 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, Award, ArrowRight, Play, Star, CheckCircle } from "lucide-react";
-
-const courses = [
-  {
-    id: 1,
-    title: "Complete Web Development Bootcamp",
-    instructor: "Sarah Johnson",
-    rating: 4.9,
-    students: 12453,
-    price: 89.99,
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop",
-    category: "Development",
-  },
-  {
-    id: 2,
-    title: "UI/UX Design Masterclass",
-    instructor: "Michael Chen",
-    rating: 4.8,
-    students: 8234,
-    price: 79.99,
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop",
-    category: "Design",
-  },
-  {
-    id: 3,
-    title: "Data Science with Python",
-    instructor: "Emily Roberts",
-    rating: 4.9,
-    students: 15678,
-    price: 99.99,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop",
-    category: "Data Science",
-  },
-];
+import { 
+  BookOpen, 
+  Users, 
+  Award, 
+  ArrowRight, 
+  Play, 
+  Star, 
+  CheckCircle, 
+  Sparkles,
+  Target,
+  TrendingUp,
+  Globe,
+  MessageSquare,
+  Clock,
+  Shield
+} from "lucide-react";
+import { usePublishedCourses } from "@/hooks/useCourses";
 
 const features = [
   {
@@ -53,7 +36,61 @@ const features = [
   },
 ];
 
+const benefits = [
+  {
+    icon: Target,
+    title: "Personalized Learning Paths",
+    description: "AI-powered recommendations tailored to your goals and skill level",
+  },
+  {
+    icon: Clock,
+    title: "Learn at Your Pace",
+    description: "Flexible schedules that fit your busy lifestyle",
+  },
+  {
+    icon: MessageSquare,
+    title: "24/7 Support",
+    description: "Get help whenever you need it from our expert team",
+  },
+  {
+    icon: Shield,
+    title: "Money-Back Guarantee",
+    description: "30-day refund policy if you're not satisfied",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Sarah Johnson",
+    role: "Software Developer",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+    quote: "LearnHub transformed my career. The courses are practical and the instructors are amazing.",
+  },
+  {
+    name: "Michael Chen",
+    role: "Product Designer",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+    quote: "I went from beginner to professional in just 6 months. Highly recommend!",
+  },
+  {
+    name: "Emily Roberts",
+    role: "Data Scientist",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+    quote: "The community here is incredible. I've made connections that will last a lifetime.",
+  },
+];
+
+const stats = [
+  { value: "50K+", label: "Active Learners" },
+  { value: "200+", label: "Expert Instructors" },
+  { value: "500+", label: "Courses Available" },
+  { value: "95%", label: "Success Rate" },
+];
+
 const Index = () => {
+  const { data: courses, isLoading } = usePublishedCourses();
+  const displayCourses = courses?.slice(0, 3) || [];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -67,13 +104,13 @@ const Index = () => {
           </Link>
           
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/courses" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Courses
             </Link>
-            <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </Link>
-            <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               About
             </Link>
           </div>
@@ -107,22 +144,46 @@ const Index = () => {
               find everything you need to advance your career.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button variant="hero" size="xl">
-                Start Learning Today
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-              <Button variant="outline" size="xl">
-                <Play className="w-5 h-5" />
-                Watch Demo
-              </Button>
+              <Link to="/auth">
+                <Button variant="hero" size="xl">
+                  Start Learning Today
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/courses">
+                <Button variant="outline" size="xl">
+                  <Play className="w-5 h-5" />
+                  Browse Courses
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-16 px-6 bg-secondary/30">
+      {/* Stats Section */}
+      <section className="py-12 px-6 bg-card border-y border-border">
         <div className="container mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-3xl md:text-4xl font-bold text-primary mb-1">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground mb-4">Why Choose LearnHub?</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              We're committed to providing the best learning experience possible
+            </p>
+          </div>
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div 
@@ -141,58 +202,196 @@ const Index = () => {
       </section>
 
       {/* Popular Courses */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-secondary/30">
         <div className="container mx-auto">
           <div className="flex items-center justify-between mb-10">
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-2">Popular Courses</h2>
               <p className="text-muted-foreground">Explore our most enrolled courses</p>
             </div>
-            <Button variant="outline">
-              View All Courses
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            <Link to="/courses">
+              <Button variant="outline">
+                View All Courses
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {courses.map((course, index) => (
-              <div 
-                key={course.id}
-                className={`group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-up animation-delay-${(index + 1) * 100}`}
-              >
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={course.image} 
-                    alt={course.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-3 py-1 rounded-full bg-card/90 backdrop-blur-sm text-xs font-medium">
-                      {course.category}
-                    </span>
+          {isLoading ? (
+            <div className="grid md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-2xl bg-card border border-border p-6 animate-pulse">
+                  <div className="h-48 bg-secondary rounded-xl mb-4" />
+                  <div className="h-4 bg-secondary rounded mb-2" />
+                  <div className="h-4 bg-secondary rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : displayCourses.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">Courses Coming Soon</h3>
+              <p className="text-muted-foreground">We're working on adding amazing courses for you</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-6">
+              {displayCourses.map((course, index) => (
+                <div 
+                  key={course.id}
+                  className={`group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-up animation-delay-${(index + 1) * 100}`}
+                >
+                  <div className="relative overflow-hidden">
+                    <img 
+                      src={course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"} 
+                      alt={course.title}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    {course.category && (
+                      <div className="absolute top-3 left-3">
+                        <span className="px-3 py-1 rounded-full bg-card/90 backdrop-blur-sm text-xs font-medium">
+                          {course.category}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-3">{course.instructor_name}</p>
+                    {course.duration && (
+                      <p className="text-sm text-muted-foreground mb-4">{course.duration}</p>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold text-foreground">${Number(course.price).toFixed(2)}</span>
+                      <Link to={`/auth?redirect=/student&enroll=${course.id}`}>
+                        <Button size="sm">Enroll Now</Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-                <div className="p-5">
-                  <h3 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {course.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">{course.instructor}</p>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-accent fill-accent" />
-                      <span className="text-sm font-medium">{course.rating}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent-foreground text-sm font-medium mb-4">
+                <Sparkles className="w-4 h-4" />
+                Premium Experience
+              </div>
+              <h2 className="text-3xl font-bold text-foreground mb-6">
+                Everything You Need to Succeed
+              </h2>
+              <p className="text-muted-foreground mb-8">
+                We've designed our platform with your success in mind. From personalized learning 
+                paths to 24/7 support, we've got you covered every step of the way.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-6">
+                {benefits.map((benefit) => (
+                  <div key={benefit.title} className="flex gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <benefit.icon className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {course.students.toLocaleString()} students
-                    </span>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">{benefit.title}</h4>
+                      <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-foreground">${course.price}</span>
-                    <Button size="sm">Enroll Now</Button>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <img
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=500&fit=crop"
+                alt="Students learning"
+                className="rounded-2xl shadow-lg"
+              />
+              <div className="absolute -bottom-6 -left-6 p-4 rounded-xl bg-card shadow-lg border border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full gradient-accent flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">95%</p>
+                    <p className="text-sm text-muted-foreground">Completion Rate</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 px-6 bg-secondary/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground mb-4">What Our Students Say</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Join thousands of satisfied learners who have transformed their careers
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div 
+                key={testimonial.name}
+                className={`p-6 rounded-2xl bg-card border border-border shadow-soft animate-fade-up animation-delay-${(index + 1) * 100}`}
+              >
+                <div className="flex items-center gap-1 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="w-4 h-4 text-accent fill-accent" />
+                  ))}
+                </div>
+                <p className="text-foreground mb-6">"{testimonial.quote}"</p>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Global Community */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Globe className="w-4 h-4" />
+            Global Reach
+          </div>
+          <h2 className="text-3xl font-bold text-foreground mb-4">
+            Join Our Global Community
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+            Learners from over 150 countries trust LearnHub for their professional development.
+            Be part of a community that's shaping the future of education.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link to="/auth">
+              <Button variant="hero" size="lg">
+                Join Free Today
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/about">
+              <Button variant="outline" size="lg">
+                Learn More About Us
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -211,13 +410,17 @@ const Index = () => {
                 Start your learning journey today with unlimited access.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button variant="accent" size="lg">
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-                <Button variant="glass" size="lg">
-                  Browse Courses
-                </Button>
+                <Link to="/auth">
+                  <Button variant="accent" size="lg">
+                    Get Started Free
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link to="/courses">
+                  <Button variant="glass" size="lg">
+                    Browse Courses
+                  </Button>
+                </Link>
               </div>
               <div className="flex items-center gap-6 mt-8">
                 <div className="flex items-center gap-2 text-primary-foreground/80">
@@ -237,13 +440,44 @@ const Index = () => {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-border">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-primary-foreground" />
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-primary-foreground" />
+                </div>
+                <span className="font-bold text-foreground">LearnHub</span>
               </div>
-              <span className="font-bold text-foreground">LearnHub</span>
+              <p className="text-sm text-muted-foreground">
+                Empowering learners worldwide with quality education and expert instruction.
+              </p>
             </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Platform</h4>
+              <ul className="space-y-2">
+                <li><Link to="/courses" className="text-sm text-muted-foreground hover:text-foreground">Courses</Link></li>
+                <li><Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</Link></li>
+                <li><Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Support</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground">Help Center</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</a></li>
+                <li><a href="#" className="text-sm text-muted-foreground hover:text-foreground">Cookie Policy</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               © 2024 LearnHub. All rights reserved.
             </p>

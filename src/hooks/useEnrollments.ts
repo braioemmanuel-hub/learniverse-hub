@@ -1,0 +1,127 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/AuthContext';
+
+export type Enrollment = Tables<'enrollments'>;
+export type EnrollmentInsert = TablesInsert<'enrollments'>;
+
+export interface EnrollmentWithCourse extends Enrollment {
+  course: Tables<'courses'>;
+}
+
+export function useMyEnrollments() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['enrollments', 'my', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('enrollments')
+        .select(`
+          *,
+          course:courses(*)
+        `)
+        .eq('user_id', user.id)
+        .order('enrolled_at', { ascending: false });
+
+      if (error) throw error;
+      return data as EnrollmentWithCourse[];
+    },
+    enabled: !!user,
+  });
+}
+
+export function useAllEnrollments() {
+  return useQuery({
+    queryKey: ['enrollments', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('enrollments')
+        .select(`
+          *,
+          course:courses(*)
+        `)
+        .order('enrolled_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useEnrollInCourse() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (courseId: string) => {
+      if (!user) throw new Error('User must be logged in');
+
+      const { data, error } = await supabase
+        .from('enrollments')
+        .insert({
+          user_id: user.id,
+          course_id: courseId,
+          status: 'active',
+          progress: 0,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+    },
+  });
+}
+
+export function useIsEnrolled(courseId: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['enrollment', 'check', user?.id, courseId],
+    queryFn: async () => {
+      if (!user) return false;
+
+      const { data, error } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return !!data;
+    },
+    enabled: !!user && !!courseId,
+  });
+}
+
+export function useUpdateProgress() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ enrollmentId, progress }: { enrollmentId: string; progress: number }) => {
+      const updates: any = { progress };
+      if (progress >= 100) {
+        updates.status = 'completed';
+        updates.completed_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('enrollments')
+        .update(updates)
+        .eq('id', enrollmentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+    },
+  });
+}
