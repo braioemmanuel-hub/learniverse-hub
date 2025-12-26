@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard,
   BookOpen,
@@ -13,104 +13,96 @@ import {
   Play,
   Clock,
   CheckCircle,
-  Star,
-  Calendar,
-  FileText,
-  HelpCircle,
-  MessageSquare,
-  CreditCard,
-  User,
-  TrendingUp,
-  Target,
   Zap,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMyEnrollments, useEnrollInCourse } from "@/hooks/useEnrollments";
+import { usePublishedCourses } from "@/hooks/useCourses";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
   { icon: BookOpen, label: "My Courses", id: "courses" },
+  { icon: ShoppingCart, label: "Browse Courses", id: "browse" },
   { icon: Award, label: "Certificates", id: "certificates" },
-  { icon: Calendar, label: "Schedule", id: "schedule" },
-  { icon: FileText, label: "Notes", id: "notes" },
-  { icon: MessageSquare, label: "Discussions", id: "discussions" },
-  { icon: CreditCard, label: "Payments", id: "payments" },
-  { icon: HelpCircle, label: "Help & Support", id: "support" },
   { icon: Settings, label: "Settings", id: "settings" },
-];
-
-const enrolledCourses = [
-  {
-    id: 1,
-    title: "Complete Web Development Bootcamp",
-    instructor: "Sarah Johnson",
-    progress: 65,
-    totalLessons: 48,
-    completedLessons: 31,
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop",
-    nextLesson: "Building REST APIs",
-    duration: "2h 30m left",
-  },
-  {
-    id: 2,
-    title: "UI/UX Design Masterclass",
-    instructor: "Michael Chen",
-    progress: 30,
-    totalLessons: 36,
-    completedLessons: 11,
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop",
-    nextLesson: "Color Theory Basics",
-    duration: "8h remaining",
-  },
-  {
-    id: 3,
-    title: "Data Science with Python",
-    instructor: "Emily Roberts",
-    progress: 85,
-    totalLessons: 52,
-    completedLessons: 44,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop",
-    nextLesson: "Machine Learning Intro",
-    duration: "1h 15m left",
-  },
-];
-
-const recentActivity = [
-  { type: "completed", course: "Web Development", lesson: "JavaScript Fundamentals", time: "2 hours ago" },
-  { type: "started", course: "UI/UX Design", lesson: "User Research Methods", time: "5 hours ago" },
-  { type: "certificate", course: "Python Basics", time: "1 day ago" },
-  { type: "enrolled", course: "Machine Learning 101", time: "2 days ago" },
-];
-
-const upcomingSchedule = [
-  { title: "Live Session: Q&A with Sarah", course: "Web Development", time: "Today, 3:00 PM", type: "live" },
-  { title: "Assignment Due: Project 3", course: "Data Science", time: "Tomorrow, 11:59 PM", type: "assignment" },
-  { title: "Group Discussion", course: "UI/UX Design", time: "Wed, 2:00 PM", type: "discussion" },
-];
-
-const certificates = [
-  { id: 1, title: "Python Basics", date: "Dec 15, 2024", grade: "A" },
-  { id: 2, title: "HTML & CSS Fundamentals", date: "Nov 20, 2024", grade: "A+" },
-];
-
-const payments = [
-  { id: 1, course: "Web Development Bootcamp", amount: 89.99, date: "Dec 1, 2024", status: "Completed" },
-  { id: 2, course: "UI/UX Design Masterclass", amount: 79.99, date: "Nov 15, 2024", status: "Completed" },
-  { id: 3, course: "Data Science with Python", amount: 99.99, date: "Oct 20, 2024", status: "Completed" },
 ];
 
 const StudentDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [searchParams] = useSearchParams();
+
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+  const { data: enrollments, isLoading: enrollmentsLoading } = useMyEnrollments();
+  const { data: allCourses, isLoading: coursesLoading } = usePublishedCourses();
+  const enrollInCourse = useEnrollInCourse();
+
+  // Handle enrollment from URL param
+  useEffect(() => {
+    const enrollCourseId = searchParams.get('enroll');
+    if (enrollCourseId && allCourses) {
+      const courseToEnroll = allCourses.find(c => c.id === enrollCourseId);
+      if (courseToEnroll) {
+        const isAlreadyEnrolled = enrollments?.some(e => e.course_id === enrollCourseId);
+        if (!isAlreadyEnrolled) {
+          setSelectedCourse(courseToEnroll);
+          setEnrollDialogOpen(true);
+        }
+      }
+    }
+  }, [searchParams, allCourses, enrollments]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const handleEnroll = async () => {
+    if (!selectedCourse) return;
+    try {
+      await enrollInCourse.mutateAsync(selectedCourse.id);
+      setEnrollDialogOpen(false);
+      setSelectedCourse(null);
+      toast.success("Successfully enrolled in " + selectedCourse.title);
+      setActiveTab("courses");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to enroll");
+    }
+  };
+
+  // Get courses not yet enrolled
+  const enrolledCourseIds = enrollments?.map(e => e.course_id) || [];
+  const availableCourses = allCourses?.filter(c => !enrolledCourseIds.includes(c.id)) || [];
 
   const stats = [
-    { label: "Courses Enrolled", value: "6", icon: BookOpen, color: "primary" },
-    { label: "Hours Learned", value: "124", icon: Clock, color: "accent" },
-    { label: "Certificates", value: "2", icon: Award, color: "primary" },
+    { label: "Courses Enrolled", value: enrollments?.length || 0, icon: BookOpen, color: "primary" },
+    { label: "In Progress", value: enrollments?.filter(e => e.status === 'active').length || 0, icon: Clock, color: "accent" },
+    { label: "Completed", value: enrollments?.filter(e => e.status === 'completed').length || 0, icon: Award, color: "primary" },
     { label: "Current Streak", value: "12 days", icon: Zap, color: "accent" },
   ];
+
+  const userInitials = user?.user_metadata?.full_name
+    ?.split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase() || user?.email?.[0].toUpperCase() || 'U';
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -147,11 +139,13 @@ const StudentDashboard = () => {
               <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src="" />
-                  <AvatarFallback className="bg-primary text-primary-foreground">JS</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-primary-foreground">{userInitials}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold text-foreground">John Student</p>
-                  <p className="text-xs text-muted-foreground">Pro Member</p>
+                  <p className="font-semibold text-foreground">
+                    {user?.user_metadata?.full_name || user?.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Student</p>
                 </div>
               </div>
             </div>
@@ -180,12 +174,14 @@ const StudentDashboard = () => {
 
           {/* Logout */}
           <div className="p-4 border-t border-border">
-            <Link to="/">
-              <Button variant="ghost" className={`w-full justify-start gap-3 ${!sidebarOpen && "justify-center"}`}>
-                <LogOut className="w-5 h-5" />
-                {sidebarOpen && <span>Logout</span>}
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              className={`w-full justify-start gap-3 ${!sidebarOpen && "justify-center"}`}
+              onClick={handleLogout}
+            >
+              <LogOut className="w-5 h-5" />
+              {sidebarOpen && <span>Logout</span>}
+            </Button>
           </div>
         </div>
       </aside>
@@ -213,7 +209,7 @@ const StudentDashboard = () => {
             </Button>
             <Avatar className="w-9 h-9">
               <AvatarImage src="" />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm">JS</AvatarFallback>
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm">{userInitials}</AvatarFallback>
             </Avatar>
           </div>
         </header>
@@ -227,13 +223,13 @@ const StudentDashboard = () => {
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50" />
                 <div className="relative">
                   <h2 className="text-2xl font-bold text-primary-foreground mb-2">
-                    Welcome back, John! 👋
+                    Welcome back, {user?.user_metadata?.full_name?.split(' ')[0] || 'Learner'}! 👋
                   </h2>
                   <p className="text-primary-foreground/80 mb-4">
-                    You're on a 12-day learning streak! Keep it up.
+                    {enrollments?.length ? `You have ${enrollments.length} course(s) in progress.` : 'Start your learning journey today!'}
                   </p>
-                  <Button variant="accent" size="sm">
-                    Continue Learning
+                  <Button variant="accent" size="sm" onClick={() => setActiveTab("browse")}>
+                    {enrollments?.length ? 'Continue Learning' : 'Browse Courses'}
                     <Play className="w-4 h-4" />
                   </Button>
                 </div>
@@ -256,331 +252,290 @@ const StudentDashboard = () => {
               </div>
 
               {/* Continue Learning */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">Continue Learning</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("courses")}>
-                    View All
-                  </Button>
-                </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {enrolledCourses.map((course) => (
-                    <div
-                      key={course.id}
-                      className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
-                    >
-                      <div className="relative">
-                        <img
-                          src={course.image}
-                          alt={course.title}
-                          className="w-full h-36 object-cover"
-                        />
-                        <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button variant="accent" size="sm">
-                            <Play className="w-4 h-4" />
-                            Continue
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <h4 className="font-semibold text-foreground mb-1 line-clamp-1">{course.title}</h4>
-                        <p className="text-sm text-muted-foreground mb-3">{course.instructor}</p>
-                        <div className="mb-2">
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">{course.completedLessons}/{course.totalLessons} lessons</span>
-                            <span className="font-medium text-primary">{course.progress}%</span>
+              {enrollments && enrollments.length > 0 ? (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-foreground">Continue Learning</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("courses")}>
+                      View All
+                    </Button>
+                  </div>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {enrollments.slice(0, 3).map((enrollment) => (
+                      <div
+                        key={enrollment.id}
+                        className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="relative">
+                          <img
+                            src={enrollment.course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
+                            alt={enrollment.course.title}
+                            className="w-full h-36 object-cover"
+                          />
+                          <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button variant="accent" size="sm">
+                              <Play className="w-4 h-4" />
+                              Continue
+                            </Button>
                           </div>
-                          <Progress value={course.progress} className="h-2" />
                         </div>
-                        <p className="text-xs text-muted-foreground">Next: {course.nextLesson}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Activity & Schedule */}
-              <div className="grid lg:grid-cols-2 gap-6">
-                <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h3>
-                  <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          activity.type === "completed" ? "bg-primary/10" :
-                          activity.type === "certificate" ? "bg-accent/10" :
-                          "bg-secondary"
-                        }`}>
-                          {activity.type === "completed" && <CheckCircle className="w-4 h-4 text-primary" />}
-                          {activity.type === "started" && <Play className="w-4 h-4 text-muted-foreground" />}
-                          {activity.type === "certificate" && <Award className="w-4 h-4 text-accent" />}
-                          {activity.type === "enrolled" && <BookOpen className="w-4 h-4 text-muted-foreground" />}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm text-foreground">
-                            {activity.type === "completed" && `Completed "${activity.lesson}"`}
-                            {activity.type === "started" && `Started "${activity.lesson}"`}
-                            {activity.type === "certificate" && `Earned certificate for ${activity.course}`}
-                            {activity.type === "enrolled" && `Enrolled in ${activity.course}`}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-foreground mb-1 line-clamp-1">{enrollment.course.title}</h4>
+                          <p className="text-sm text-muted-foreground mb-3">{enrollment.course.instructor_name}</p>
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between text-sm mb-1">
+                              <span className="text-muted-foreground">Progress</span>
+                              <span className="font-medium text-primary">{enrollment.progress}%</span>
+                            </div>
+                            <Progress value={enrollment.progress || 0} className="h-2" />
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Upcoming Schedule</h3>
-                  <div className="space-y-4">
-                    {upcomingSchedule.map((event, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 rounded-xl bg-secondary/50">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          event.type === "live" ? "gradient-accent" :
-                          event.type === "assignment" ? "gradient-primary" :
-                          "bg-secondary"
-                        }`}>
-                          {event.type === "live" && <Play className="w-5 h-5 text-primary-foreground" />}
-                          {event.type === "assignment" && <FileText className="w-5 h-5 text-primary-foreground" />}
-                          {event.type === "discussion" && <MessageSquare className="w-5 h-5 text-foreground" />}
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">{event.title}</p>
-                          <p className="text-sm text-muted-foreground">{event.course}</p>
-                          <p className="text-xs text-primary mt-1">{event.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              ) : (
+                <div className="text-center py-12 rounded-2xl bg-card border border-border">
+                  <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-foreground mb-2">No courses yet</h3>
+                  <p className="text-muted-foreground mb-4">Enroll in a course to start learning</p>
+                  <Button onClick={() => setActiveTab("browse")}>Browse Courses</Button>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
           {activeTab === "courses" && (
             <div className="space-y-6 animate-fade-in">
               <p className="text-muted-foreground">Courses you're enrolled in</p>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {enrolledCourses.map((course) => (
-                  <div
-                    key={course.id}
-                    className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
-                  >
-                    <div className="relative">
-                      <img
-                        src={course.image}
-                        alt={course.title}
-                        className="w-full h-40 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button variant="accent">
-                          <Play className="w-4 h-4" />
-                          Continue Learning
-                        </Button>
-                      </div>
+              {enrollmentsLoading ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="rounded-2xl bg-card border border-border p-6 animate-pulse">
+                      <div className="h-40 bg-secondary rounded-xl mb-4" />
+                      <div className="h-4 bg-secondary rounded mb-2" />
+                      <div className="h-4 bg-secondary rounded w-2/3" />
                     </div>
-                    <div className="p-5">
-                      <h4 className="font-semibold text-foreground mb-1">{course.title}</h4>
-                      <p className="text-sm text-muted-foreground mb-4">{course.instructor}</p>
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-muted-foreground">{course.completedLessons} of {course.totalLessons} lessons</span>
-                          <span className="font-semibold text-primary">{course.progress}%</span>
+                  ))}
+                </div>
+              ) : enrollments?.length === 0 ? (
+                <div className="text-center py-12 rounded-2xl bg-card border border-border">
+                  <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-foreground mb-2">No enrolled courses</h3>
+                  <p className="text-muted-foreground mb-4">Browse our catalog and enroll in a course</p>
+                  <Button onClick={() => setActiveTab("browse")}>Browse Courses</Button>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {enrollments?.map((enrollment) => (
+                    <div
+                      key={enrollment.id}
+                      className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
+                    >
+                      <div className="relative">
+                        <img
+                          src={enrollment.course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
+                          alt={enrollment.course.title}
+                          className="w-full h-40 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button variant="accent">
+                            <Play className="w-4 h-4" />
+                            Continue Learning
+                          </Button>
                         </div>
-                        <Progress value={course.progress} className="h-2" />
+                        {enrollment.status === 'completed' && (
+                          <div className="absolute top-3 right-3">
+                            <span className="px-2 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Completed
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {course.duration}
-                        </span>
-                        <span className="text-muted-foreground">Next: {course.nextLesson}</span>
+                      <div className="p-5">
+                        <h4 className="font-semibold text-foreground mb-1">{enrollment.course.title}</h4>
+                        <p className="text-sm text-muted-foreground mb-4">{enrollment.course.instructor_name}</p>
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">Progress</span>
+                            <span className="font-medium text-primary">{enrollment.progress}%</span>
+                          </div>
+                          <Progress value={enrollment.progress || 0} className="h-2" />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Enrolled on {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "browse" && (
+            <div className="space-y-6 animate-fade-in">
+              <p className="text-muted-foreground">Discover new courses to advance your skills</p>
+              {coursesLoading ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="rounded-2xl bg-card border border-border p-6 animate-pulse">
+                      <div className="h-40 bg-secondary rounded-xl mb-4" />
+                      <div className="h-4 bg-secondary rounded mb-2" />
+                      <div className="h-4 bg-secondary rounded w-2/3" />
+                    </div>
+                  ))}
+                </div>
+              ) : availableCourses.length === 0 ? (
+                <div className="text-center py-12 rounded-2xl bg-card border border-border">
+                  <CheckCircle className="w-16 h-16 text-primary mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-foreground mb-2">You're enrolled in all courses!</h3>
+                  <p className="text-muted-foreground">Check back later for new courses</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {availableCourses.map((course) => (
+                    <div
+                      key={course.id}
+                      className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                    >
+                      <div className="relative overflow-hidden">
+                        <img
+                          src={course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
+                          alt={course.title}
+                          className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {course.category && (
+                          <div className="absolute top-3 left-3">
+                            <span className="px-3 py-1 rounded-full bg-card/90 backdrop-blur-sm text-xs font-medium">
+                              {course.category}
+                            </span>
+                          </div>
+                        )}
+                        {course.level && (
+                          <div className="absolute top-3 right-3">
+                            <span className="px-3 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium">
+                              {course.level}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-5">
+                        <h4 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                          {course.title}
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-2">{course.instructor_name}</p>
+                        {course.description && (
+                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                            {course.description}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xl font-bold text-foreground">
+                            ${Number(course.price).toFixed(2)}
+                          </span>
+                          <Button 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedCourse(course);
+                              setEnrollDialogOpen(true);
+                            }}
+                          >
+                            Enroll Now
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === "certificates" && (
             <div className="space-y-6 animate-fade-in">
               <p className="text-muted-foreground">Your earned certificates</p>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {certificates.map((cert) => (
-                  <div key={cert.id} className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                    <div className="w-16 h-16 rounded-xl gradient-accent flex items-center justify-center mb-4">
-                      <Award className="w-8 h-8 text-primary-foreground" />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-2">{cert.title}</h3>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{cert.date}</span>
-                      <span className="font-medium text-primary">Grade: {cert.grade}</span>
-                    </div>
-                    <Button variant="outline" className="w-full mt-4" size="sm">
-                      Download Certificate
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === "schedule" && (
-            <div className="space-y-6 animate-fade-in">
-              <p className="text-muted-foreground">Your upcoming events and deadlines</p>
-              <div className="space-y-4">
-                {upcomingSchedule.map((event, index) => (
-                  <div key={index} className="p-6 rounded-2xl bg-card border border-border shadow-soft flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                      event.type === "live" ? "gradient-accent" :
-                      event.type === "assignment" ? "gradient-primary" :
-                      "bg-secondary"
-                    }`}>
-                      {event.type === "live" && <Play className="w-6 h-6 text-primary-foreground" />}
-                      {event.type === "assignment" && <FileText className="w-6 h-6 text-primary-foreground" />}
-                      {event.type === "discussion" && <MessageSquare className="w-6 h-6 text-foreground" />}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-foreground">{event.title}</h4>
-                      <p className="text-sm text-muted-foreground">{event.course}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-primary">{event.time}</p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        {event.type === "live" ? "Join" : "View Details"}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === "payments" && (
-            <div className="space-y-6 animate-fade-in">
-              <p className="text-muted-foreground">Your payment history</p>
-              <div className="rounded-2xl bg-card border border-border shadow-soft overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-secondary/50">
-                    <tr>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Course</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Amount</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Date</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {payments.map((payment) => (
-                      <tr key={payment.id} className="hover:bg-secondary/30 transition-colors">
-                        <td className="px-6 py-4 font-medium text-foreground">{payment.course}</td>
-                        <td className="px-6 py-4 text-foreground">${payment.amount}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{payment.date}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                            {payment.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "notes" && (
-            <div className="space-y-6 animate-fade-in">
-              <p className="text-muted-foreground">Your course notes</p>
-              <div className="p-12 rounded-2xl bg-card border border-border shadow-soft text-center">
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">No notes yet</h3>
-                <p className="text-muted-foreground mb-4">Start taking notes while watching courses</p>
-                <Button>Create Your First Note</Button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "discussions" && (
-            <div className="space-y-6 animate-fade-in">
-              <p className="text-muted-foreground">Course discussions and community</p>
-              <div className="p-12 rounded-2xl bg-card border border-border shadow-soft text-center">
-                <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">Join the conversation</h3>
-                <p className="text-muted-foreground mb-4">Connect with fellow learners in course discussions</p>
-                <Button>Browse Discussions</Button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "support" && (
-            <div className="space-y-6 animate-fade-in">
-              <p className="text-muted-foreground">Get help and support</p>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                  <HelpCircle className="w-10 h-10 text-primary mb-4" />
-                  <h3 className="font-semibold text-foreground mb-2">FAQs</h3>
-                  <p className="text-muted-foreground mb-4">Find answers to commonly asked questions</p>
-                  <Button variant="outline">View FAQs</Button>
+              {enrollments?.filter(e => e.status === 'completed').length === 0 ? (
+                <div className="text-center py-12 rounded-2xl bg-card border border-border">
+                  <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-foreground mb-2">No certificates yet</h3>
+                  <p className="text-muted-foreground">Complete a course to earn your first certificate</p>
                 </div>
-                <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                  <MessageSquare className="w-10 h-10 text-primary mb-4" />
-                  <h3 className="font-semibold text-foreground mb-2">Contact Support</h3>
-                  <p className="text-muted-foreground mb-4">Reach out to our support team</p>
-                  <Button variant="outline">Send Message</Button>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {enrollments?.filter(e => e.status === 'completed').map((enrollment) => (
+                    <div key={enrollment.id} className="p-6 rounded-2xl bg-card border border-border shadow-soft">
+                      <div className="w-16 h-16 rounded-full gradient-accent flex items-center justify-center mx-auto mb-4">
+                        <Award className="w-8 h-8 text-primary-foreground" />
+                      </div>
+                      <h4 className="font-semibold text-foreground text-center mb-2">{enrollment.course.title}</h4>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Completed on {new Date(enrollment.completed_at || '').toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           )}
 
           {activeTab === "settings" && (
-            <div className="max-w-2xl space-y-6 animate-fade-in">
+            <div className="space-y-6 animate-fade-in">
               <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                <h3 className="text-lg font-semibold text-foreground mb-6">Profile Settings</h3>
-                <div className="flex items-center gap-4 mb-6">
-                  <Avatar className="w-20 h-20">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl">JS</AvatarFallback>
-                  </Avatar>
-                  <Button variant="outline">Change Photo</Button>
-                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Account Settings</h3>
                 <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">First Name</label>
-                      <Input defaultValue="John" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">Last Name</label>
-                      <Input defaultValue="Student" />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Email</label>
+                    <Input value={user?.email || ''} disabled />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
-                    <Input type="email" defaultValue="john@example.com" />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Full Name</label>
+                    <Input value={user?.user_metadata?.full_name || ''} disabled />
                   </div>
-                  <Button>Save Changes</Button>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Password</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">Current Password</label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">New Password</label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
-                  <Button>Update Password</Button>
                 </div>
               </div>
             </div>
           )}
         </div>
       </main>
+
+      {/* Enrollment Dialog */}
+      <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enroll in Course</DialogTitle>
+            <DialogDescription>
+              Confirm your enrollment in this course
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCourse && (
+            <div className="py-4">
+              <div className="rounded-xl overflow-hidden mb-4">
+                <img
+                  src={selectedCourse.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop"}
+                  alt={selectedCourse.title}
+                  className="w-full h-40 object-cover"
+                />
+              </div>
+              <h4 className="font-semibold text-foreground mb-2">{selectedCourse.title}</h4>
+              <p className="text-sm text-muted-foreground mb-4">{selectedCourse.instructor_name}</p>
+              <div className="flex items-center justify-between p-4 rounded-xl bg-secondary">
+                <span className="text-muted-foreground">Course Price</span>
+                <span className="text-2xl font-bold text-foreground">${Number(selectedCourse.price).toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEnrollDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEnroll} disabled={enrollInCourse.isPending}>
+              {enrollInCourse.isPending ? "Enrolling..." : "Confirm Enrollment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

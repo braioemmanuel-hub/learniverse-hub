@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -17,6 +17,8 @@ import {
   TrendingUp,
   DollarSign,
   GraduationCap,
+  Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,61 +40,155 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAllCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from "@/hooks/useCourses";
+import { useAllUsers, useUpdateUserRole } from "@/hooks/useUsers";
+import { useAdminStats } from "@/hooks/useStats";
 
 const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-  { icon: Users, label: "Users", path: "/admin/users" },
-  { icon: BookOpen, label: "Courses", path: "/admin/courses" },
-  { icon: Settings, label: "Settings", path: "/admin/settings" },
-];
-
-const stats = [
-  { label: "Total Users", value: "12,453", change: "+12%", icon: Users, color: "primary" },
-  { label: "Active Courses", value: "156", change: "+8%", icon: BookOpen, color: "accent" },
-  { label: "Revenue", value: "$84,230", change: "+23%", icon: DollarSign, color: "primary" },
-  { label: "Enrollments", value: "3,847", change: "+15%", icon: GraduationCap, color: "accent" },
-];
-
-const users = [
-  { id: 1, name: "John Doe", email: "john@example.com", role: "Student", status: "Active", avatar: "JD", courses: 5 },
-  { id: 2, name: "Jane Smith", email: "jane@example.com", role: "Instructor", status: "Active", avatar: "JS", courses: 12 },
-  { id: 3, name: "Mike Wilson", email: "mike@example.com", role: "Student", status: "Inactive", avatar: "MW", courses: 3 },
-  { id: 4, name: "Sarah Connor", email: "sarah@example.com", role: "Student", status: "Active", avatar: "SC", courses: 8 },
-];
-
-const courses = [
-  { id: 1, title: "Web Development Bootcamp", instructor: "Jane Smith", students: 2345, price: 89.99, status: "Published" },
-  { id: 2, title: "UI/UX Fundamentals", instructor: "Mike Chen", students: 1234, price: 69.99, status: "Published" },
-  { id: 3, title: "Python for Data Science", instructor: "Emily Roberts", students: 3456, price: 99.99, status: "Draft" },
+  { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
+  { icon: Users, label: "Users", id: "users" },
+  { icon: BookOpen, label: "Courses", id: "courses" },
+  { icon: Settings, label: "Settings", id: "settings" },
 ];
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [editUserOpen, setEditUserOpen] = useState(false);
   const [addCourseOpen, setAddCourseOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<typeof users[0] | null>(null);
-  const location = useLocation();
+  const [editCourseOpen, setEditCourseOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [newCourse, setNewCourse] = useState({
+    title: "",
+    instructor_name: "",
+    description: "",
+    price: 0,
+    category: "",
+    level: "Beginner",
+    duration: "",
+    is_published: false,
+  });
 
-  const handleEditUser = (user: typeof users[0]) => {
-    setSelectedUser(user);
-    setEditUserOpen(true);
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+  const { data: courses, isLoading: coursesLoading } = useAllCourses();
+  const { data: users, isLoading: usersLoading } = useAllUsers();
+  const { data: stats, isLoading: statsLoading } = useAdminStats();
+  const createCourse = useCreateCourse();
+  const updateCourse = useUpdateCourse();
+  const deleteCourse = useDeleteCourse();
+  const updateUserRole = useUpdateUserRole();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
   };
 
-  const handleDeleteUser = (userId: number) => {
-    toast.success("User deleted successfully");
+  const handleAddCourse = async () => {
+    try {
+      await createCourse.mutateAsync({
+        ...newCourse,
+        created_by: user?.id,
+      });
+      setAddCourseOpen(false);
+      setNewCourse({
+        title: "",
+        instructor_name: "",
+        description: "",
+        price: 0,
+        category: "",
+        level: "Beginner",
+        duration: "",
+        is_published: false,
+      });
+      toast.success("Course created successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create course");
+    }
   };
 
-  const handleSaveUser = () => {
-    setEditUserOpen(false);
-    toast.success("User updated successfully");
+  const handleUpdateCourse = async () => {
+    if (!selectedCourse) return;
+    try {
+      await updateCourse.mutateAsync({
+        id: selectedCourse.id,
+        updates: {
+          title: selectedCourse.title,
+          instructor_name: selectedCourse.instructor_name,
+          description: selectedCourse.description,
+          price: selectedCourse.price,
+          category: selectedCourse.category,
+          level: selectedCourse.level,
+          duration: selectedCourse.duration,
+          is_published: selectedCourse.is_published,
+        },
+      });
+      setEditCourseOpen(false);
+      setSelectedCourse(null);
+      toast.success("Course updated successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update course");
+    }
   };
 
-  const handleAddCourse = () => {
-    setAddCourseOpen(false);
-    toast.success("Course created successfully");
+  const handleDeleteCourse = async (id: string) => {
+    try {
+      await deleteCourse.mutateAsync(id);
+      toast.success("Course deleted successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete course");
+    }
   };
+
+  const handleToggleRole = async (userId: string, currentRole: 'admin' | 'student') => {
+    const newRole = currentRole === 'admin' ? 'student' : 'admin';
+    try {
+      await updateUserRole.mutateAsync({ userId, role: newRole });
+      toast.success(`User role updated to ${newRole}`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update role");
+    }
+  };
+
+  const statsDisplay = [
+    { 
+      label: "Total Users", 
+      value: stats?.totalUsers?.toString() || "0", 
+      change: "+12%", 
+      icon: Users, 
+      color: "primary" 
+    },
+    { 
+      label: "Active Courses", 
+      value: stats?.publishedCourses?.toString() || "0", 
+      change: "+8%", 
+      icon: BookOpen, 
+      color: "accent" 
+    },
+    { 
+      label: "Revenue", 
+      value: `$${stats?.totalRevenue?.toLocaleString() || "0"}`, 
+      change: "+23%", 
+      icon: DollarSign, 
+      color: "primary" 
+    },
+    { 
+      label: "Enrollments", 
+      value: stats?.totalEnrollments?.toString() || "0", 
+      change: "+15%", 
+      icon: GraduationCap, 
+      color: "accent" 
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -126,11 +222,11 @@ const AdminDashboard = () => {
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
             {sidebarItems.map((item) => {
-              const isActive = activeTab === item.label.toLowerCase();
+              const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.label}
-                  onClick={() => setActiveTab(item.label.toLowerCase())}
+                  onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-md"
@@ -146,12 +242,14 @@ const AdminDashboard = () => {
 
           {/* Logout */}
           <div className="p-4 border-t border-border">
-            <Link to="/">
-              <Button variant="ghost" className={`w-full justify-start gap-3 ${!sidebarOpen && "justify-center"}`}>
-                <LogOut className="w-5 h-5" />
-                {sidebarOpen && <span>Logout</span>}
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              className={`w-full justify-start gap-3 ${!sidebarOpen && "justify-center"}`}
+              onClick={handleLogout}
+            >
+              <LogOut className="w-5 h-5" />
+              {sidebarOpen && <span>Logout</span>}
+            </Button>
           </div>
         </div>
       </aside>
@@ -188,7 +286,7 @@ const AdminDashboard = () => {
             <div className="space-y-6 animate-fade-in">
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
+                {statsDisplay.map((stat, index) => (
                   <div
                     key={stat.label}
                     className={`p-6 rounded-2xl bg-card border border-border shadow-soft animate-fade-up animation-delay-${(index + 1) * 100}`}
@@ -213,25 +311,27 @@ const AdminDashboard = () => {
                 <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Recent Users</h3>
                   <div className="space-y-4">
-                    {users.slice(0, 4).map((user) => (
+                    {usersLoading ? (
+                      <p className="text-muted-foreground">Loading...</p>
+                    ) : users?.slice(0, 4).map((user) => (
                       <div key={user.id} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
                             <AvatarFallback className="bg-secondary text-secondary-foreground text-sm">
-                              {user.avatar}
+                              {user.full_name?.split(' ').map(n => n[0]).join('') || user.email[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-foreground">{user.name}</p>
+                            <p className="font-medium text-foreground">{user.full_name || 'No name'}</p>
                             <p className="text-sm text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          user.status === "Active" 
-                            ? "bg-primary/10 text-primary" 
-                            : "bg-muted text-muted-foreground"
+                          user.role === "admin" 
+                            ? "bg-accent/10 text-accent-foreground" 
+                            : "bg-primary/10 text-primary"
                         }`}>
-                          {user.status}
+                          {user.role}
                         </span>
                       </div>
                     ))}
@@ -241,15 +341,19 @@ const AdminDashboard = () => {
                 <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Top Courses</h3>
                   <div className="space-y-4">
-                    {courses.map((course) => (
+                    {coursesLoading ? (
+                      <p className="text-muted-foreground">Loading...</p>
+                    ) : courses?.slice(0, 4).map((course) => (
                       <div key={course.id} className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-foreground">{course.title}</p>
-                          <p className="text-sm text-muted-foreground">{course.instructor}</p>
+                          <p className="text-sm text-muted-foreground">{course.instructor_name}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-foreground">${course.price}</p>
-                          <p className="text-sm text-muted-foreground">{course.students} students</p>
+                          <p className="font-semibold text-foreground">${Number(course.price).toFixed(2)}</p>
+                          <span className={`text-xs ${course.is_published ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {course.is_published ? 'Published' : 'Draft'}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -262,11 +366,7 @@ const AdminDashboard = () => {
           {activeTab === "users" && (
             <div className="space-y-6 animate-fade-in">
               <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">Manage all user accounts</p>
-                <Button>
-                  <Plus className="w-4 h-4" />
-                  Add User
-                </Button>
+                <p className="text-muted-foreground">Manage all user accounts and roles</p>
               </div>
 
               <div className="rounded-2xl bg-card border border-border shadow-soft overflow-hidden">
@@ -275,38 +375,53 @@ const AdminDashboard = () => {
                     <tr>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">User</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Role</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Status</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Courses</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Enrollments</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">Joined</th>
                       <th className="text-right px-6 py-4 text-sm font-semibold text-foreground">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {users.map((user) => (
+                    {usersLoading ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                          Loading users...
+                        </td>
+                      </tr>
+                    ) : users?.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                          No users found
+                        </td>
+                      </tr>
+                    ) : users?.map((user) => (
                       <tr key={user.id} className="hover:bg-secondary/30 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="w-10 h-10">
                               <AvatarFallback className="bg-secondary text-secondary-foreground text-sm">
-                                {user.avatar}
+                                {user.full_name?.split(' ').map(n => n[0]).join('') || user.email[0].toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium text-foreground">{user.name}</p>
+                              <p className="font-medium text-foreground">{user.full_name || 'No name'}</p>
                               <p className="text-sm text-muted-foreground">{user.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-foreground">{user.role}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            user.status === "Active" 
-                              ? "bg-primary/10 text-primary" 
-                              : "bg-muted text-muted-foreground"
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${
+                            user.role === "admin" 
+                              ? "bg-accent/10 text-accent-foreground" 
+                              : "bg-primary/10 text-primary"
                           }`}>
-                            {user.status}
+                            {user.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : null}
+                            {user.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-foreground">{user.courses}</td>
+                        <td className="px-6 py-4 text-sm text-foreground">{user.enrollmentCount}</td>
+                        <td className="px-6 py-4 text-sm text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </td>
                         <td className="px-6 py-4 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -315,16 +430,9 @@ const AdminDashboard = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
+                              <DropdownMenuItem onClick={() => handleToggleRole(user.id, user.role)}>
+                                <Shield className="w-4 h-4 mr-2" />
+                                {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -345,12 +453,12 @@ const AdminDashboard = () => {
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className="w-4 h-4" />
-                      Upload Course
+                      Create Course
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-lg">
+                  <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Upload New Course</DialogTitle>
+                      <DialogTitle>Create New Course</DialogTitle>
                       <DialogDescription>
                         Add a new course to the platform
                       </DialogDescription>
@@ -358,145 +466,304 @@ const AdminDashboard = () => {
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
                         <Label htmlFor="title">Course Title</Label>
-                        <Input id="title" placeholder="Enter course title" />
+                        <Input 
+                          id="title" 
+                          placeholder="Enter course title"
+                          value={newCourse.title}
+                          onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="instructor">Instructor</Label>
-                        <Input id="instructor" placeholder="Instructor name" />
+                        <Label htmlFor="instructor">Instructor Name</Label>
+                        <Input 
+                          id="instructor" 
+                          placeholder="Instructor name"
+                          value={newCourse.instructor_name}
+                          onChange={(e) => setNewCourse({ ...newCourse, instructor_name: e.target.value })}
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="price">Price ($)</Label>
-                        <Input id="price" type="number" placeholder="99.99" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="price">Price ($)</Label>
+                          <Input 
+                            id="price" 
+                            type="number" 
+                            placeholder="99.99"
+                            value={newCourse.price}
+                            onChange={(e) => setNewCourse({ ...newCourse, price: parseFloat(e.target.value) || 0 })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="duration">Duration</Label>
+                          <Input 
+                            id="duration" 
+                            placeholder="e.g., 10 hours"
+                            value={newCourse.duration}
+                            onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="category">Category</Label>
+                          <Input 
+                            id="category" 
+                            placeholder="e.g., Development"
+                            value={newCourse.category}
+                            onChange={(e) => setNewCourse({ ...newCourse, category: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="level">Level</Label>
+                          <Select 
+                            value={newCourse.level}
+                            onValueChange={(value) => setNewCourse({ ...newCourse, level: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Beginner">Beginner</SelectItem>
+                              <SelectItem value="Intermediate">Intermediate</SelectItem>
+                              <SelectItem value="Advanced">Advanced</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
-                        <Textarea id="description" placeholder="Course description..." />
+                        <Textarea 
+                          id="description" 
+                          placeholder="Course description..."
+                          value={newCourse.description}
+                          onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="published">Publish immediately</Label>
+                        <Switch
+                          id="published"
+                          checked={newCourse.is_published}
+                          onCheckedChange={(checked) => setNewCourse({ ...newCourse, is_published: checked })}
+                        />
                       </div>
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setAddCourseOpen(false)}>
                         Cancel
                       </Button>
-                      <Button onClick={handleAddCourse}>Create Course</Button>
+                      <Button onClick={handleAddCourse} disabled={createCourse.isPending}>
+                        {createCourse.isPending ? "Creating..." : "Create Course"}
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course) => (
-                  <div key={course.id} className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                    <div className="flex items-start justify-between mb-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        course.status === "Published" 
-                          ? "bg-primary/10 text-primary" 
-                          : "bg-accent/10 text-accent-foreground"
-                      }`}>
-                        {course.status}
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              {coursesLoading ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-6 rounded-2xl bg-card border border-border animate-pulse">
+                      <div className="h-4 bg-secondary rounded mb-4" />
+                      <div className="h-4 bg-secondary rounded w-2/3" />
                     </div>
-                    <h3 className="font-semibold text-foreground mb-2">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{course.instructor}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-foreground">${course.price}</span>
-                      <span className="text-sm text-muted-foreground">{course.students} students</span>
+                  ))}
+                </div>
+              ) : courses?.length === 0 ? (
+                <div className="text-center py-12">
+                  <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No courses yet</h3>
+                  <p className="text-muted-foreground mb-4">Create your first course to get started</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {courses?.map((course) => (
+                    <div key={course.id} className="p-6 rounded-2xl bg-card border border-border shadow-soft">
+                      <div className="flex items-start justify-between mb-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          course.is_published
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        }`}>
+                          {course.is_published ? "Published" : "Draft"}
+                        </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedCourse({ ...course });
+                              setEditCourseOpen(true);
+                            }}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteCourse(course.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <h4 className="font-semibold text-foreground mb-1 line-clamp-2">{course.title}</h4>
+                      <p className="text-sm text-muted-foreground mb-3">{course.instructor_name}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-foreground">
+                          ${Number(course.price).toFixed(2)}
+                        </span>
+                        {course.category && (
+                          <span className="text-xs text-muted-foreground">{course.category}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Edit Course Dialog */}
+              <Dialog open={editCourseOpen} onOpenChange={setEditCourseOpen}>
+                <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Edit Course</DialogTitle>
+                    <DialogDescription>
+                      Update course details
+                    </DialogDescription>
+                  </DialogHeader>
+                  {selectedCourse && (
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-title">Course Title</Label>
+                        <Input 
+                          id="edit-title" 
+                          value={selectedCourse.title}
+                          onChange={(e) => setSelectedCourse({ ...selectedCourse, title: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-instructor">Instructor Name</Label>
+                        <Input 
+                          id="edit-instructor" 
+                          value={selectedCourse.instructor_name}
+                          onChange={(e) => setSelectedCourse({ ...selectedCourse, instructor_name: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-price">Price ($)</Label>
+                          <Input 
+                            id="edit-price" 
+                            type="number"
+                            value={selectedCourse.price}
+                            onChange={(e) => setSelectedCourse({ ...selectedCourse, price: parseFloat(e.target.value) || 0 })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-duration">Duration</Label>
+                          <Input 
+                            id="edit-duration" 
+                            value={selectedCourse.duration || ''}
+                            onChange={(e) => setSelectedCourse({ ...selectedCourse, duration: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-category">Category</Label>
+                          <Input 
+                            id="edit-category" 
+                            value={selectedCourse.category || ''}
+                            onChange={(e) => setSelectedCourse({ ...selectedCourse, category: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-level">Level</Label>
+                          <Select 
+                            value={selectedCourse.level || 'Beginner'}
+                            onValueChange={(value) => setSelectedCourse({ ...selectedCourse, level: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Beginner">Beginner</SelectItem>
+                              <SelectItem value="Intermediate">Intermediate</SelectItem>
+                              <SelectItem value="Advanced">Advanced</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-description">Description</Label>
+                        <Textarea 
+                          id="edit-description" 
+                          value={selectedCourse.description || ''}
+                          onChange={(e) => setSelectedCourse({ ...selectedCourse, description: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="edit-published">Published</Label>
+                        <Switch
+                          id="edit-published"
+                          checked={selectedCourse.is_published}
+                          onCheckedChange={(checked) => setSelectedCourse({ ...selectedCourse, is_published: checked })}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setEditCourseOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleUpdateCourse} disabled={updateCourse.isPending}>
+                      {updateCourse.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
           {activeTab === "settings" && (
-            <div className="max-w-2xl space-y-6 animate-fade-in">
+            <div className="space-y-6 animate-fade-in">
               <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                <h3 className="text-lg font-semibold text-foreground mb-6">Account Settings</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Account Settings</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="adminName">Admin Name</Label>
-                    <Input id="adminName" defaultValue="Admin User" />
+                    <Label htmlFor="admin-email">Admin Email</Label>
+                    <Input id="admin-email" value={user?.email || ''} disabled />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="adminEmail">Email</Label>
-                    <Input id="adminEmail" type="email" defaultValue="admin@learnhub.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">New Password</Label>
-                    <Input id="password" type="password" placeholder="••••••••" />
-                  </div>
-                  <Button onClick={() => toast.success("Settings saved!")}>Save Changes</Button>
                 </div>
               </div>
 
               <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Platform Settings</h3>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="siteName">Site Name</Label>
-                    <Input id="siteName" defaultValue="LearnHub" />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">Allow new registrations</p>
+                      <p className="text-sm text-muted-foreground">Enable or disable new user sign-ups</p>
+                    </div>
+                    <Switch defaultChecked />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="supportEmail">Support Email</Label>
-                    <Input id="supportEmail" type="email" defaultValue="support@learnhub.com" />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">Email notifications</p>
+                      <p className="text-sm text-muted-foreground">Receive email alerts for new enrollments</p>
+                    </div>
+                    <Switch defaultChecked />
                   </div>
-                  <Button onClick={() => toast.success("Platform settings saved!")}>Update Platform</Button>
                 </div>
               </div>
             </div>
           )}
         </div>
       </main>
-
-      {/* Edit User Dialog */}
-      <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
-              Update user information
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="userName">Name</Label>
-                <Input id="userName" defaultValue={selectedUser.name} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="userEmail">Email</Label>
-                <Input id="userEmail" type="email" defaultValue={selectedUser.email} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="userRole">Role</Label>
-                <Input id="userRole" defaultValue={selectedUser.role} />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditUserOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveUser}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
