@@ -262,8 +262,9 @@ const StudentDashboard = () => {
                   </div>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {enrollments.slice(0, 3).map((enrollment) => (
-                      <div
+                      <Link
                         key={enrollment.id}
+                        to={`/course/${enrollment.course_id}`}
                         className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
                       >
                         <div className="relative">
@@ -290,7 +291,7 @@ const StudentDashboard = () => {
                             <Progress value={enrollment.progress || 0} className="h-2" />
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -328,8 +329,9 @@ const StudentDashboard = () => {
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {enrollments?.map((enrollment) => (
-                    <div
+                    <Link
                       key={enrollment.id}
+                      to={`/course/${enrollment.course_id}`}
                       className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
                     >
                       <div className="relative">
@@ -367,7 +369,7 @@ const StudentDashboard = () => {
                           Enrolled on {new Date(enrollment.enrolled_at).toLocaleDateString()}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
