@@ -163,8 +163,8 @@ const Courses = () => {
                       <span className="text-xl font-bold text-foreground">
                         ${Number(course.price).toFixed(2)}
                       </span>
-                      <Link to={`/auth?redirect=/student&enroll=${course.id}`}>
-                        <Button size="sm">Enroll Now</Button>
+                      <Link to={`/course/${course.id}`}>
+                        <Button size="sm">View Course</Button>
                       </Link>
                     </div>
                   </div>
