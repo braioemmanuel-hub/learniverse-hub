@@ -19,7 +19,9 @@ import {
   GraduationCap,
   Shield,
   ShieldCheck,
+  FileText,
 } from "lucide-react";
+import LessonManager from "@/components/admin/LessonManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -67,6 +69,7 @@ const AdminDashboard = () => {
   const [addCourseOpen, setAddCourseOpen] = useState(false);
   const [editCourseOpen, setEditCourseOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [managingLessonsCourse, setManagingLessonsCourse] = useState<{ id: string; title: string } | null>(null);
   const [newCourse, setNewCourse] = useState({
     title: "",
     instructor_name: "",
@@ -445,7 +448,7 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {activeTab === "courses" && (
+          {activeTab === "courses" && !managingLessonsCourse && (
             <div className="space-y-6 animate-fade-in">
               <div className="flex items-center justify-between">
                 <p className="text-muted-foreground">Manage all courses</p>
@@ -595,6 +598,12 @@ const AdminDashboard = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => {
+                              setManagingLessonsCourse({ id: course.id, title: course.title });
+                            }}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              Manage Lessons
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
                               setSelectedCourse({ ...course });
                               setEditCourseOpen(true);
                             }}>
@@ -727,6 +736,13 @@ const AdminDashboard = () => {
                 </DialogContent>
               </Dialog>
             </div>
+          )}
+
+          {activeTab === "courses" && managingLessonsCourse && (
+            <LessonManager
+              course={managingLessonsCourse}
+              onBack={() => setManagingLessonsCourse(null)}
+            />
           )}
 
           {activeTab === "settings" && (
