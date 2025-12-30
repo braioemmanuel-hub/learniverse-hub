@@ -20,8 +20,12 @@ import {
   Shield,
   ShieldCheck,
   FileText,
+  CreditCard,
+  Layout,
 } from "lucide-react";
 import LessonManager from "@/components/admin/LessonManager";
+import EnrollmentManager from "@/components/admin/EnrollmentManager";
+import LandingPageEditor from "@/components/admin/LandingPageEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -60,6 +64,8 @@ const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
   { icon: Users, label: "Users", id: "users" },
   { icon: BookOpen, label: "Courses", id: "courses" },
+  { icon: CreditCard, label: "Enrollments", id: "enrollments" },
+  { icon: Layout, label: "Landing Page", id: "landing" },
   { icon: Settings, label: "Settings", id: "settings" },
 ];
 
@@ -744,6 +750,10 @@ const AdminDashboard = () => {
               onBack={() => setManagingLessonsCourse(null)}
             />
           )}
+
+          {activeTab === "enrollments" && <EnrollmentManager />}
+
+          {activeTab === "landing" && <LandingPageEditor />}
 
           {activeTab === "settings" && (
             <div className="space-y-6 animate-fade-in">

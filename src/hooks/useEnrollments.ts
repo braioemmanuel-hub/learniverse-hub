@@ -34,6 +34,15 @@ export function useMyEnrollments() {
   });
 }
 
+export interface EnrollmentWithDetails extends Enrollment {
+  course: Tables<'courses'>;
+  profile?: {
+    id: string;
+    email: string;
+    full_name: string | null;
+  };
+}
+
 export function useAllEnrollments() {
   return useQuery({
     queryKey: ['enrollments', 'all'],
@@ -47,7 +56,44 @@ export function useAllEnrollments() {
         .order('enrolled_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Fetch profiles separately due to RLS
+      const userIds = [...new Set(data.map((e: Enrollment) => e.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      return data.map((enrollment: EnrollmentWithCourse) => ({
+        ...enrollment,
+        profile: profileMap.get(enrollment.user_id),
+      })) as EnrollmentWithDetails[];
+    },
+  });
+}
+
+export function useUpdateEnrollmentPayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      enrollmentId, 
+      paymentStatus 
+    }: { 
+      enrollmentId: string; 
+      paymentStatus: 'pending' | 'approved' | 'rejected';
+    }) => {
+      const { error } = await supabase
+        .from('enrollments')
+        .update({ payment_status: paymentStatus })
+        .eq('id', enrollmentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
     },
   });
 }

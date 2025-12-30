@@ -17,6 +17,7 @@ import {
   Shield
 } from "lucide-react";
 import { usePublishedCourses } from "@/hooks/useCourses";
+import { useLandingContent } from "@/hooks/useLandingContent";
 
 const features = [
   {
@@ -89,7 +90,22 @@ const stats = [
 
 const Index = () => {
   const { data: courses, isLoading } = usePublishedCourses();
+  const { data: content } = useLandingContent();
   const displayCourses = courses?.slice(0, 3) || [];
+
+  // Default content fallbacks
+  const heroContent = content?.hero || {
+    title: "Unlock Your Potential with World-Class Learning",
+    subtitle: "Master new skills with expert-led courses. From coding to design, find everything you need to advance your career.",
+    badge: "Trusted by 50,000+ learners worldwide",
+    cta_primary: "Start Learning Today",
+    cta_secondary: "Browse Courses",
+  };
+
+  const statsContent = content?.stats || stats;
+  const featuresContent = content?.features || { title: "Why Choose LearnHub?", subtitle: "We're committed to providing the best learning experience possible", items: features.map(f => ({ title: f.title, description: f.description })) };
+  const testimonialsContent = content?.testimonials || { title: "What Our Students Say", subtitle: "Join thousands of satisfied learners who have transformed their careers", items: testimonials };
+  const ctaContent = content?.cta || { title: "Ready to Transform Your Career?", subtitle: "Join thousands of learners who have already taken the first step. Start your learning journey today with unlimited access.", button_text: "Get Started Free" };
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,27 +149,33 @@ const Index = () => {
           <div className="max-w-3xl mx-auto text-center animate-fade-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
               <Star className="w-4 h-4 fill-current" />
-              <span>Trusted by 50,000+ learners worldwide</span>
+              <span>{heroContent.badge}</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6">
-              Unlock Your Potential with{" "}
-              <span className="text-primary">World-Class</span> Learning
+              {heroContent.title.includes("World-Class") ? (
+                <>
+                  {heroContent.title.split("World-Class")[0]}
+                  <span className="text-primary">World-Class</span>
+                  {heroContent.title.split("World-Class")[1]}
+                </>
+              ) : (
+                heroContent.title
+              )}
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Master new skills with expert-led courses. From coding to design, 
-              find everything you need to advance your career.
+              {heroContent.subtitle}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/auth">
                 <Button variant="hero" size="xl">
-                  Start Learning Today
+                  {heroContent.cta_primary}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
               <Link to="/courses">
                 <Button variant="outline" size="xl">
                   <Play className="w-5 h-5" />
-                  Browse Courses
+                  {heroContent.cta_secondary}
                 </Button>
               </Link>
             </div>
@@ -165,7 +187,7 @@ const Index = () => {
       <section className="py-12 px-6 bg-card border-y border-border">
         <div className="container mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
+            {statsContent.map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-3xl md:text-4xl font-bold text-primary mb-1">{stat.value}</p>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -179,24 +201,27 @@ const Index = () => {
       <section className="py-20 px-6">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Why Choose LearnHub?</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">{featuresContent.title}</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              We're committed to providing the best learning experience possible
+              {featuresContent.subtitle}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={feature.title}
-                className={`p-6 rounded-2xl bg-card shadow-soft border border-border/50 animate-fade-up animation-delay-${(index + 1) * 100}`}
-              >
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-primary-foreground" />
+            {featuresContent.items?.map((feature, index) => {
+              const IconComponent = features[index]?.icon || BookOpen;
+              return (
+                <div 
+                  key={feature.title}
+                  className={`p-6 rounded-2xl bg-card shadow-soft border border-border/50 animate-fade-up animation-delay-${(index + 1) * 100}`}
+                >
+                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
+                    <IconComponent className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -332,13 +357,13 @@ const Index = () => {
       <section className="py-20 px-6 bg-secondary/30">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">What Our Students Say</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">{testimonialsContent.title}</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of satisfied learners who have transformed their careers
+              {testimonialsContent.subtitle}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
+            {testimonialsContent.items?.map((testimonial, index) => (
               <div 
                 key={testimonial.name}
                 className={`p-6 rounded-2xl bg-card border border-border shadow-soft animate-fade-up animation-delay-${(index + 1) * 100}`}
