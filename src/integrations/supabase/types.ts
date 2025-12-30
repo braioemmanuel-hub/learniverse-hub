@@ -68,6 +68,8 @@ export type Database = {
           course_id: string
           enrolled_at: string
           id: string
+          payment_reference: string | null
+          payment_status: string | null
           progress: number | null
           status: string | null
           user_id: string
@@ -77,6 +79,8 @@ export type Database = {
           course_id: string
           enrolled_at?: string
           id?: string
+          payment_reference?: string | null
+          payment_status?: string | null
           progress?: number | null
           status?: string | null
           user_id: string
@@ -86,6 +90,8 @@ export type Database = {
           course_id?: string
           enrolled_at?: string
           id?: string
+          payment_reference?: string | null
+          payment_status?: string | null
           progress?: number | null
           status?: string | null
           user_id?: string
@@ -99,6 +105,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      landing_page_content: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          section_key: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          section_key: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          section_key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       lessons: {
         Row: {
