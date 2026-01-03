@@ -100,42 +100,6 @@ export default function AdminAuth() {
           </CardHeader>
           
           <CardContent>
-            {!loading && user && !isAdmin && (
-              <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
-                <p className="font-medium">You’re currently signed in with a non-admin account.</p>
-                <p className="mt-1 text-amber-200/80">Sign out to continue with an admin login.</p>
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="bg-slate-900/40 text-slate-100 hover:bg-slate-900/60"
-                    onClick={() => navigate('/student')}
-                    disabled={isSigningOut || isLoading}
-                  >
-                    Go to Student Dashboard
-                  </Button>
-                  <Button
-                    type="button"
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-semibold"
-                    onClick={async () => {
-                      try {
-                        setIsSigningOut(true);
-                        await signOut();
-                        toast.success('Signed out. You can now log in as admin.');
-                      } catch {
-                        toast.error('Failed to sign out. Please try again.');
-                      } finally {
-                        setIsSigningOut(false);
-                      }
-                    }}
-                    disabled={isSigningOut || isLoading}
-                  >
-                    {isSigningOut ? 'Signing out…' : 'Sign out'}
-                  </Button>
-                </div>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-slate-300">Email</Label>
