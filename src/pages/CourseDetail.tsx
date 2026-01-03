@@ -12,6 +12,7 @@ import {
   User,
   Award,
   BarChart,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,9 +20,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLessons, Lesson } from "@/hooks/useLessons";
-import { useIsEnrolled, useEnrollInCourse, useMyEnrollments, useUpdateProgress } from "@/hooks/useEnrollments";
+import { useMyEnrollments, useUpdateProgress } from "@/hooks/useEnrollments";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { PaymentEnrollmentDialog } from "@/components/PaymentEnrollmentDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Course = Tables<'courses'>;
 
@@ -29,19 +32,23 @@ const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [lessonsExpanded, setLessonsExpanded] = useState(true);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const { data: lessons, isLoading: lessonsLoading } = useLessons(courseId || '');
-  const { data: isEnrolled, isLoading: enrolledLoading } = useIsEnrolled(courseId || '');
-  const { data: enrollments } = useMyEnrollments();
-  const enrollInCourse = useEnrollInCourse();
+  const { data: enrollments, refetch: refetchEnrollments } = useMyEnrollments();
   const updateProgress = useUpdateProgress();
 
   const currentEnrollment = enrollments?.find(e => e.course_id === courseId);
+  const isEnrolled = !!currentEnrollment;
+  const isPendingPayment = currentEnrollment?.payment_status === 'pending';
+  const isPaymentApproved = currentEnrollment?.payment_status === 'approved';
+  const isPaymentRejected = currentEnrollment?.payment_status === 'rejected';
 
   // Fetch course details
   useEffect(() => {
@@ -80,17 +87,17 @@ const CourseDetail = () => {
     }
   }, [currentEnrollment, lessons]);
 
-  const handleEnroll = async () => {
+  const handleEnroll = () => {
     if (!user) {
       navigate(`/auth?redirect=/course/${courseId}`);
       return;
     }
-    try {
-      await enrollInCourse.mutateAsync(courseId!);
-      toast.success("Successfully enrolled in the course!");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to enroll");
-    }
+    setPaymentDialogOpen(true);
+  };
+
+  const handleEnrollmentSuccess = () => {
+    refetchEnrollments();
+    queryClient.invalidateQueries({ queryKey: ['enrollments'] });
   };
 
   const handleLessonComplete = async (lessonId: string) => {
@@ -126,10 +133,11 @@ const CourseDetail = () => {
   };
 
   const canAccessLesson = (lesson: Lesson) => {
-    return lesson.is_free || isEnrolled;
+    // User can access if lesson is free, or if enrolled with approved payment
+    return lesson.is_free || (isEnrolled && isPaymentApproved);
   };
 
-  if (loading || enrolledLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -163,7 +171,7 @@ const CourseDetail = () => {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            {isEnrolled && (
+            {isEnrolled && isPaymentApproved && (
               <div className="hidden sm:flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">Progress</span>
                 <Progress value={progress} className="w-32 h-2" />
@@ -182,6 +190,28 @@ const CourseDetail = () => {
           </div>
         </div>
       </header>
+
+      {/* Payment Status Banner */}
+      {isPendingPayment && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-6 py-3">
+          <div className="container mx-auto flex items-center gap-3 text-amber-600">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm">
+              <span className="font-semibold">Payment pending approval.</span> An admin will verify your payment slip and grant access soon.
+            </p>
+          </div>
+        </div>
+      )}
+      {isPaymentRejected && (
+        <div className="bg-destructive/10 border-b border-destructive/30 px-6 py-3">
+          <div className="container mx-auto flex items-center gap-3 text-destructive">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm">
+              <span className="font-semibold">Payment was rejected.</span> Please contact support or try enrolling again with a valid payment slip.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row">
         {/* Video Player Section */}
@@ -209,8 +239,8 @@ const CourseDetail = () => {
                   <Lock className="w-16 h-16 mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">This lesson is locked</p>
                   <p className="text-sm opacity-70 mb-4">Enroll to access all lessons</p>
-                  <Button onClick={handleEnroll} disabled={enrollInCourse.isPending}>
-                    {enrollInCourse.isPending ? "Enrolling..." : `Enroll Now - $${Number(course.price).toFixed(2)}`}
+                  <Button onClick={handleEnroll}>
+                    Enroll Now - ${Number(course.price).toFixed(2)}
                   </Button>
                 </div>
               )
@@ -309,8 +339,8 @@ const CourseDetail = () => {
                     <p className="text-3xl font-bold text-foreground">${Number(course.price).toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">One-time payment, lifetime access</p>
                   </div>
-                  <Button size="lg" onClick={handleEnroll} disabled={enrollInCourse.isPending}>
-                    {enrollInCourse.isPending ? "Enrolling..." : "Enroll Now"}
+                  <Button size="lg" onClick={handleEnroll}>
+                    Enroll Now
                   </Button>
                 </div>
               </div>
@@ -408,6 +438,16 @@ const CourseDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Enrollment Dialog */}
+      {course && (
+        <PaymentEnrollmentDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          course={course}
+          onSuccess={handleEnrollmentSuccess}
+        />
+      )}
     </div>
   );
 };

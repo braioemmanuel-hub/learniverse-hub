@@ -69,6 +69,7 @@ export type Database = {
           enrolled_at: string
           id: string
           payment_reference: string | null
+          payment_slip_url: string | null
           payment_status: string | null
           progress: number | null
           status: string | null
@@ -80,6 +81,7 @@ export type Database = {
           enrolled_at?: string
           id?: string
           payment_reference?: string | null
+          payment_slip_url?: string | null
           payment_status?: string | null
           progress?: number | null
           status?: string | null
@@ -91,6 +93,7 @@ export type Database = {
           enrolled_at?: string
           id?: string
           payment_reference?: string | null
+          payment_slip_url?: string | null
           payment_status?: string | null
           progress?: number | null
           status?: string | null

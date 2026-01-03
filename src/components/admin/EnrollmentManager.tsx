@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, Clock, MoreVertical, Search } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, MoreVertical, Search, FileImage, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -8,6 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAllEnrollments, useUpdateEnrollmentPayment, EnrollmentWithDetails } from '@/hooks/useEnrollments';
@@ -15,6 +21,7 @@ import { toast } from 'sonner';
 
 export default function EnrollmentManager() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSlip, setSelectedSlip] = useState<{ url: string; name: string } | null>(null);
   const { data: enrollments, isLoading } = useAllEnrollments();
   const updatePayment = useUpdateEnrollmentPayment();
 
@@ -96,6 +103,9 @@ export default function EnrollmentManager() {
                 Price
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
+                Payment Slip
+              </th>
+              <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
                 Payment Status
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-foreground">
@@ -112,13 +122,13 @@ export default function EnrollmentManager() {
           <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
                   Loading enrollments...
                 </td>
               </tr>
             ) : filteredEnrollments?.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
                   No enrollments found
                 </td>
               </tr>
@@ -155,6 +165,24 @@ export default function EnrollmentManager() {
                   </td>
                   <td className="px-6 py-4 text-sm font-semibold text-foreground">
                     ${Number(enrollment.course?.price || 0).toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4">
+                    {(enrollment as any).payment_slip_url ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => setSelectedSlip({
+                          url: (enrollment as any).payment_slip_url,
+                          name: enrollment.profile?.full_name || 'Unknown',
+                        })}
+                      >
+                        <FileImage className="w-4 h-4" />
+                        View Slip
+                      </Button>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No slip</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     {getPaymentStatusBadge((enrollment as any).payment_status)}
@@ -206,6 +234,47 @@ export default function EnrollmentManager() {
           </tbody>
         </table>
       </div>
+
+      {/* Payment Slip Viewer Dialog */}
+      <Dialog open={!!selectedSlip} onOpenChange={() => setSelectedSlip(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Payment Slip - {selectedSlip?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {selectedSlip?.url && (
+              <>
+                {selectedSlip.url.toLowerCase().endsWith('.pdf') ? (
+                  <div className="flex flex-col items-center gap-4 p-8 bg-secondary/30 rounded-lg">
+                    <FileImage className="w-16 h-16 text-muted-foreground" />
+                    <p className="text-muted-foreground">PDF Document</p>
+                    <Button asChild>
+                      <a href={selectedSlip.url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Open PDF
+                      </a>
+                    </Button>
+                  </div>
+                ) : (
+                  <img
+                    src={selectedSlip.url}
+                    alt="Payment slip"
+                    className="w-full rounded-lg border border-border"
+                  />
+                )}
+                <div className="mt-4 flex justify-end">
+                  <Button variant="outline" asChild>
+                    <a href={selectedSlip.url} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open in New Tab
+                    </a>
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
