@@ -15,6 +15,7 @@ import {
   CheckCircle,
   Zap,
   ShoppingCart,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyEnrollments, useEnrollInCourse } from "@/hooks/useEnrollments";
 import { usePublishedCourses } from "@/hooks/useCourses";
+import { CourseCertificate } from "@/components/CourseCertificate";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
@@ -47,6 +49,11 @@ const StudentDashboard = () => {
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [searchParams] = useSearchParams();
+  const [certificateDialogOpen, setCertificateDialogOpen] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState<{
+    courseTitle: string;
+    completionDate: string;
+  } | null>(null);
 
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -458,7 +465,7 @@ const StudentDashboard = () => {
           {activeTab === "certificates" && (
             <div className="space-y-6 animate-fade-in">
               <p className="text-muted-foreground">Your earned certificates</p>
-              {enrollments?.filter(e => e.status === 'completed').length === 0 ? (
+              {enrollments?.filter(e => e.progress === 100).length === 0 ? (
                 <div className="text-center py-12 rounded-2xl bg-card border border-border">
                   <Award className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-foreground mb-2">No certificates yet</h3>
@@ -466,15 +473,28 @@ const StudentDashboard = () => {
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {enrollments?.filter(e => e.status === 'completed').map((enrollment) => (
+                  {enrollments?.filter(e => e.progress === 100).map((enrollment) => (
                     <div key={enrollment.id} className="p-6 rounded-2xl bg-card border border-border shadow-soft">
                       <div className="w-16 h-16 rounded-full gradient-accent flex items-center justify-center mx-auto mb-4">
                         <Award className="w-8 h-8 text-primary-foreground" />
                       </div>
                       <h4 className="font-semibold text-foreground text-center mb-2">{enrollment.course.title}</h4>
-                      <p className="text-sm text-muted-foreground text-center">
-                        Completed on {new Date(enrollment.completed_at || '').toLocaleDateString()}
+                      <p className="text-sm text-muted-foreground text-center mb-4">
+                        Completed on {new Date(enrollment.completed_at || enrollment.enrolled_at).toLocaleDateString()}
                       </p>
+                      <Button
+                        className="w-full gap-2"
+                        onClick={() => {
+                          setSelectedCertificate({
+                            courseTitle: enrollment.course.title,
+                            completionDate: enrollment.completed_at || enrollment.enrolled_at,
+                          });
+                          setCertificateDialogOpen(true);
+                        }}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Generate Certificate
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -535,9 +555,20 @@ const StudentDashboard = () => {
             <Button onClick={handleEnroll} disabled={enrollInCourse.isPending}>
               {enrollInCourse.isPending ? "Enrolling..." : "Confirm Enrollment"}
             </Button>
-          </DialogFooter>
+        </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Certificate Dialog */}
+      {selectedCertificate && (
+        <CourseCertificate
+          open={certificateDialogOpen}
+          onOpenChange={setCertificateDialogOpen}
+          studentName={user?.user_metadata?.full_name || user?.email || "Student"}
+          courseTitle={selectedCertificate.courseTitle}
+          completionDate={selectedCertificate.completionDate}
+        />
+      )}
     </div>
   );
 };
