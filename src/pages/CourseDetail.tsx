@@ -277,7 +277,7 @@ const CourseDetail = () => {
                   )}
                 </div>
               </div>
-              {isEnrolled && activeLesson && !completedLessons.has(activeLesson.id) && (
+              {isEnrolled && isPaymentApproved && activeLesson && !completedLessons.has(activeLesson.id) && (
                 <Button 
                   onClick={() => handleLessonComplete(activeLesson.id)}
                   className="flex-shrink-0"
