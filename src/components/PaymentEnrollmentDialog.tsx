@@ -106,22 +106,47 @@ export function PaymentEnrollmentDialog({
         .from('payment-slips')
         .getPublicUrl(fileName);
 
-      // Create enrollment with pending payment status
-      const { error: enrollError } = await supabase
+      // Check if enrollment already exists
+      const { data: existingEnrollment } = await supabase
         .from('enrollments')
-        .insert({
-          user_id: user.id,
-          course_id: course.id,
-          status: 'active',
-          progress: 0,
-          payment_status: 'pending',
-          payment_slip_url: urlData.publicUrl,
-          payment_reference: values.fullName, // Store full name as reference
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', course.id)
+        .maybeSingle();
 
-      if (enrollError) {
-        console.error('Enrollment error:', enrollError);
-        throw new Error("Failed to submit enrollment");
+      if (existingEnrollment) {
+        // Update existing enrollment with new payment slip
+        const { error: updateError } = await supabase
+          .from('enrollments')
+          .update({
+            payment_status: 'pending',
+            payment_slip_url: urlData.publicUrl,
+            payment_reference: values.fullName,
+          })
+          .eq('id', existingEnrollment.id);
+
+        if (updateError) {
+          console.error('Update error:', updateError);
+          throw new Error("Failed to update enrollment");
+        }
+      } else {
+        // Create new enrollment
+        const { error: enrollError } = await supabase
+          .from('enrollments')
+          .insert({
+            user_id: user.id,
+            course_id: course.id,
+            status: 'active',
+            progress: 0,
+            payment_status: 'pending',
+            payment_slip_url: urlData.publicUrl,
+            payment_reference: values.fullName,
+          });
+
+        if (enrollError) {
+          console.error('Enrollment error:', enrollError);
+          throw new Error("Failed to submit enrollment");
+        }
       }
 
       toast.success("Enrollment submitted! Please wait for admin approval.");
