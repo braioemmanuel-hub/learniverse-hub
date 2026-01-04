@@ -57,7 +57,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from "@/hooks/useCourses";
-import { useAllUsers, useUpdateUserRole } from "@/hooks/useUsers";
+import { useAllUsers, useUpdateUserRole, useUpdateProfile, useDeleteUser } from "@/hooks/useUsers";
 import { useAdminStats } from "@/hooks/useStats";
 
 const sidebarItems = [
@@ -86,6 +86,8 @@ const AdminDashboard = () => {
     duration: "",
     is_published: false,
   });
+  const [editUserOpen, setEditUserOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -96,6 +98,8 @@ const AdminDashboard = () => {
   const updateCourse = useUpdateCourse();
   const deleteCourse = useDeleteCourse();
   const updateUserRole = useUpdateUserRole();
+  const updateProfile = useUpdateProfile();
+  const deleteUser = useDeleteUser();
 
   const handleLogout = async () => {
     await signOut();
@@ -165,6 +169,34 @@ const AdminDashboard = () => {
       toast.success(`User role updated to ${newRole}`);
     } catch (error: any) {
       toast.error(error.message || "Failed to update role");
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+    try {
+      await updateProfile.mutateAsync({
+        id: selectedUser.id,
+        updates: {
+          full_name: selectedUser.full_name,
+          email: selectedUser.email,
+        },
+      });
+      setEditUserOpen(false);
+      setSelectedUser(null);
+      toast.success("User updated successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update user");
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    try {
+      await deleteUser.mutateAsync(userId);
+      toast.success("User deleted successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete user");
     }
   };
 
@@ -439,9 +471,23 @@ const AdminDashboard = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedUser({ ...user });
+                                setEditUserOpen(true);
+                              }}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit User
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleToggleRole(user.id, user.role)}>
                                 <Shield className="w-4 h-4 mr-2" />
                                 {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete User
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -451,6 +497,49 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Edit User Dialog */}
+              <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Edit User</DialogTitle>
+                    <DialogDescription>
+                      Update user information
+                    </DialogDescription>
+                  </DialogHeader>
+                  {selectedUser && (
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="user-name">Full Name</Label>
+                        <Input
+                          id="user-name"
+                          placeholder="Enter full name"
+                          value={selectedUser.full_name || ''}
+                          onChange={(e) => setSelectedUser({ ...selectedUser, full_name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="user-email">Email</Label>
+                        <Input
+                          id="user-email"
+                          type="email"
+                          placeholder="Enter email"
+                          value={selectedUser.email || ''}
+                          onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setEditUserOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleUpdateUser}>
+                      Save Changes
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
