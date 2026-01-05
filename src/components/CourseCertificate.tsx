@@ -57,25 +57,21 @@ export function CourseCertificate({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Certificate Design */}
         <div
           ref={certificateRef}
           className="relative bg-white p-8 md:p-12 border-8 border-double border-primary/30 rounded-lg"
           style={{ aspectRatio: "1.414/1" }}
         >
-          {/* Decorative corners */}
           <div className="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 border-primary/40 rounded-tl-lg" />
           <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-primary/40 rounded-tr-lg" />
           <div className="absolute bottom-4 left-4 w-16 h-16 border-b-4 border-l-4 border-primary/40 rounded-bl-lg" />
           <div className="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 border-primary/40 rounded-br-lg" />
 
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-            {/* Logo/Icon */}
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               <Award className="w-10 h-10 text-white" />
             </div>
 
-            {/* Header */}
             <div>
               <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-800 tracking-wide">
                 Certificate of Completion
@@ -83,7 +79,6 @@ export function CourseCertificate({
               <div className="w-32 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mt-4" />
             </div>
 
-            {/* Body */}
             <div className="space-y-4 max-w-2xl">
               <p className="text-gray-600 text-lg">This is to certify that</p>
               <p className="text-3xl md:text-4xl font-serif font-bold text-primary">
@@ -107,7 +102,6 @@ export function CourseCertificate({
               </p>
             </div>
 
-            {/* Signature */}
             <div className="pt-8 mt-auto">
               <div className="w-64 border-t-2 border-gray-400 pt-3 mx-auto">
                 <p className="text-lg font-script italic text-gray-700">
@@ -117,14 +111,12 @@ export function CourseCertificate({
               </div>
             </div>
 
-            {/* Footer */}
             <div className="text-xs text-gray-400 mt-4">
               LearnHub • Online Learning Platform
             </div>
           </div>
         </div>
 
-        {/* Download Button */}
         <div className="flex justify-center pt-4">
           <Button onClick={handleDownload} className="gap-2">
             <Download className="w-4 h-4" />
