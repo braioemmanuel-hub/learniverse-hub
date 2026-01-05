@@ -16,6 +16,8 @@ import {
   Zap,
   ShoppingCart,
   FileText,
+  Lock,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -270,38 +272,70 @@ const StudentDashboard = () => {
                     </Button>
                   </div>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {enrollments.slice(0, 3).map((enrollment) => (
-                      <Link
-                        key={enrollment.id}
-                        to={`/course/${enrollment.course_id}`}
-                        className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
-                      >
-                        <div className="relative">
-                          <img
-                            src={enrollment.course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
-                            alt={enrollment.course.title}
-                            className="w-full h-36 object-cover"
-                          />
-                          <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button variant="accent" size="sm">
-                              <Play className="w-4 h-4" />
-                              Continue
-                            </Button>
+                    {enrollments.slice(0, 3).map((enrollment) => {
+                      const isPending = enrollment.payment_status === 'pending';
+                      const isRejected = enrollment.payment_status === 'rejected';
+                      const isApproved = enrollment.payment_status === 'approved';
+
+                      return (
+                        <Link
+                          key={enrollment.id}
+                          to={`/course/${enrollment.course_id}`}
+                          className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
+                        >
+                          <div className="relative">
+                            <img
+                              src={enrollment.course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
+                              alt={enrollment.course.title}
+                              className="w-full h-36 object-cover"
+                            />
+                            {!isApproved && (
+                              <div className="absolute inset-0 bg-foreground/70 flex items-center justify-center">
+                                <div className="text-center text-primary-foreground">
+                                  <Lock className="w-6 h-6 mx-auto mb-1" />
+                                  <p className="text-xs font-medium">
+                                    {isPending ? "Payment Pending" : "Rejected"}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            {isApproved && (
+                              <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Button variant="accent" size="sm">
+                                  <Play className="w-4 h-4" />
+                                  Continue
+                                </Button>
+                              </div>
+                            )}
+                            {isPending && (
+                              <div className="absolute top-2 left-2">
+                                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-xs font-medium">
+                                  Pending
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <div className="p-4">
-                          <h4 className="font-semibold text-foreground mb-1 line-clamp-1">{enrollment.course.title}</h4>
-                          <p className="text-sm text-muted-foreground mb-3">{enrollment.course.instructor_name}</p>
-                          <div className="mb-2">
-                            <div className="flex items-center justify-between text-sm mb-1">
-                              <span className="text-muted-foreground">Progress</span>
-                              <span className="font-medium text-primary">{enrollment.progress}%</span>
-                            </div>
-                            <Progress value={enrollment.progress || 0} className="h-2" />
+                          <div className="p-4">
+                            <h4 className="font-semibold text-foreground mb-1 line-clamp-1">{enrollment.course.title}</h4>
+                            <p className="text-sm text-muted-foreground mb-3">{enrollment.course.instructor_name}</p>
+                            {isApproved && (
+                              <div className="mb-2">
+                                <div className="flex items-center justify-between text-sm mb-1">
+                                  <span className="text-muted-foreground">Progress</span>
+                                  <span className="font-medium text-primary">{enrollment.progress}%</span>
+                                </div>
+                                <Progress value={enrollment.progress || 0} className="h-2" />
+                              </div>
+                            )}
+                            {!isApproved && (
+                              <p className="text-xs text-muted-foreground">
+                                {isPending ? "Awaiting approval" : "Re-enroll required"}
+                              </p>
+                            )}
                           </div>
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
@@ -337,49 +371,90 @@ const StudentDashboard = () => {
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {enrollments?.map((enrollment) => (
-                    <Link
-                      key={enrollment.id}
-                      to={`/course/${enrollment.course_id}`}
-                      className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
-                    >
-                      <div className="relative">
-                        <img
-                          src={enrollment.course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
-                          alt={enrollment.course.title}
-                          className="w-full h-40 object-cover"
-                        />
-                        <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button variant="accent">
-                            <Play className="w-4 h-4" />
-                            Continue Learning
-                          </Button>
+                  {enrollments?.map((enrollment) => {
+                    const isPending = enrollment.payment_status === 'pending';
+                    const isRejected = enrollment.payment_status === 'rejected';
+                    const isApproved = enrollment.payment_status === 'approved';
+
+                    return (
+                      <Link
+                        key={enrollment.id}
+                        to={`/course/${enrollment.course_id}`}
+                        className="group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="relative">
+                          <img
+                            src={enrollment.course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
+                            alt={enrollment.course.title}
+                            className="w-full h-40 object-cover"
+                          />
+                          {!isApproved && (
+                            <div className="absolute inset-0 bg-foreground/70 flex items-center justify-center">
+                              <div className="text-center text-primary-foreground">
+                                <Lock className="w-8 h-8 mx-auto mb-2" />
+                                <p className="text-sm font-medium">
+                                  {isPending ? "Payment Pending" : "Payment Rejected"}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {isApproved && (
+                            <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button variant="accent">
+                                <Play className="w-4 h-4" />
+                                Continue Learning
+                              </Button>
+                            </div>
+                          )}
+                          {enrollment.status === 'completed' && (
+                            <div className="absolute top-3 right-3">
+                              <span className="px-2 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Completed
+                              </span>
+                            </div>
+                          )}
+                          {isPending && (
+                            <div className="absolute top-3 left-3">
+                              <span className="px-2 py-1 rounded-full bg-amber-500 text-white text-xs font-medium flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                Pending
+                              </span>
+                            </div>
+                          )}
+                          {isRejected && (
+                            <div className="absolute top-3 left-3">
+                              <span className="px-2 py-1 rounded-full bg-destructive text-destructive-foreground text-xs font-medium flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                Rejected
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {enrollment.status === 'completed' && (
-                          <div className="absolute top-3 right-3">
-                            <span className="px-2 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" />
-                              Completed
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-5">
-                        <h4 className="font-semibold text-foreground mb-1">{enrollment.course.title}</h4>
-                        <p className="text-sm text-muted-foreground mb-4">{enrollment.course.instructor_name}</p>
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium text-primary">{enrollment.progress}%</span>
-                          </div>
-                          <Progress value={enrollment.progress || 0} className="h-2" />
+                        <div className="p-5">
+                          <h4 className="font-semibold text-foreground mb-1">{enrollment.course.title}</h4>
+                          <p className="text-sm text-muted-foreground mb-4">{enrollment.course.instructor_name}</p>
+                          {isApproved && (
+                            <div className="mb-3">
+                              <div className="flex items-center justify-between text-sm mb-1">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-medium text-primary">{enrollment.progress}%</span>
+                              </div>
+                              <Progress value={enrollment.progress || 0} className="h-2" />
+                            </div>
+                          )}
+                          {!isApproved && (
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {isPending ? "Waiting for payment approval" : "Please re-enroll with valid payment"}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Enrolled on {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          Enrolled on {new Date(enrollment.enrolled_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
