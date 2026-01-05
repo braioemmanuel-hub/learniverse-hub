@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -22,6 +22,9 @@ import {
   FileText,
   CreditCard,
   Layout,
+  Award,
+  Upload,
+  Trash2 as TrashIcon,
 } from "lucide-react";
 import LessonManager from "@/components/admin/LessonManager";
 import EnrollmentManager from "@/components/admin/EnrollmentManager";
@@ -59,6 +62,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAllCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from "@/hooks/useCourses";
 import { useAllUsers, useUpdateUserRole, useUpdateProfile, useDeleteUser } from "@/hooks/useUsers";
 import { useAdminStats } from "@/hooks/useStats";
+import { 
+  useCertificateSettings, 
+  useUpdateCertificateSettings, 
+  uploadCertificateLogo,
+  deleteCertificateLogo,
+  type CertificateSettings 
+} from "@/hooks/useCertificateSettings";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
@@ -88,18 +98,34 @@ const AdminDashboard = () => {
   });
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [certSettings, setCertSettings] = useState<CertificateSettings>({
+    signature_name: "LearnHub Administration",
+    logo_url: null,
+    organization_name: "LearnHub",
+  });
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { data: courses, isLoading: coursesLoading } = useAllCourses();
   const { data: users, isLoading: usersLoading } = useAllUsers();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
+  const { data: certificateSettings, isLoading: certSettingsLoading } = useCertificateSettings();
   const createCourse = useCreateCourse();
   const updateCourse = useUpdateCourse();
   const deleteCourse = useDeleteCourse();
   const updateUserRole = useUpdateUserRole();
   const updateProfile = useUpdateProfile();
   const deleteUser = useDeleteUser();
+  const updateCertSettings = useUpdateCertificateSettings();
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync certificate settings from database
+  useEffect(() => {
+    if (certificateSettings) {
+      setCertSettings(certificateSettings);
+    }
+  }, [certificateSettings]);
 
   const handleLogout = async () => {
     await signOut();
@@ -853,6 +879,121 @@ const AdminDashboard = () => {
                     <Label htmlFor="admin-email">Admin Email</Label>
                     <Input id="admin-email" value={user?.email || ''} disabled />
                   </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-card border border-border shadow-soft">
+                <div className="flex items-center gap-2 mb-4">
+                  <Award className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Certificate Settings</h3>
+                </div>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="signature-name">Signature Name</Label>
+                    <Input
+                      id="signature-name"
+                      placeholder="e.g., John Doe, CEO"
+                      value={certSettings.signature_name}
+                      onChange={(e) => setCertSettings({ ...certSettings, signature_name: e.target.value })}
+                    />
+                    <p className="text-sm text-muted-foreground">This name will appear as the authorized signature on certificates</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="organization-name">Organization Name</Label>
+                    <Input
+                      id="organization-name"
+                      placeholder="e.g., LearnHub Academy"
+                      value={certSettings.organization_name}
+                      onChange={(e) => setCertSettings({ ...certSettings, organization_name: e.target.value })}
+                    />
+                    <p className="text-sm text-muted-foreground">This name will appear in the certificate footer</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Certificate Logo</Label>
+                    <div className="flex items-start gap-4">
+                      {certSettings.logo_url ? (
+                        <div className="relative">
+                          <img
+                            src={certSettings.logo_url}
+                            alt="Certificate logo"
+                            className="w-20 h-20 object-contain border border-border rounded-lg bg-white p-2"
+                          />
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="absolute -top-2 -right-2 w-6 h-6"
+                            onClick={async () => {
+                              try {
+                                if (certSettings.logo_url) {
+                                  await deleteCertificateLogo(certSettings.logo_url);
+                                }
+                                setCertSettings({ ...certSettings, logo_url: null });
+                                toast.success("Logo removed");
+                              } catch (error: any) {
+                                toast.error(error.message || "Failed to remove logo");
+                              }
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-secondary/30">
+                          <Award className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <input
+                          ref={logoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setUploadingLogo(true);
+                            try {
+                              const url = await uploadCertificateLogo(file);
+                              setCertSettings({ ...certSettings, logo_url: url });
+                              toast.success("Logo uploaded");
+                            } catch (error: any) {
+                              toast.error(error.message || "Failed to upload logo");
+                            } finally {
+                              setUploadingLogo(false);
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => logoInputRef.current?.click()}
+                          disabled={uploadingLogo}
+                          className="gap-2"
+                        >
+                          <Upload className="w-4 h-4" />
+                          {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                        </Button>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Recommended: Square image, PNG or JPG
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await updateCertSettings.mutateAsync(certSettings);
+                        toast.success("Certificate settings saved");
+                      } catch (error: any) {
+                        toast.error(error.message || "Failed to save settings");
+                      }
+                    }}
+                    disabled={updateCertSettings.isPending}
+                  >
+                    {updateCertSettings.isPending ? "Saving..." : "Save Certificate Settings"}
+                  </Button>
                 </div>
               </div>
 

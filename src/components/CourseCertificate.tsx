@@ -15,6 +15,8 @@ interface CourseCertificateProps {
   courseTitle: string;
   completionDate: string;
   adminSignature?: string;
+  logoUrl?: string | null;
+  organizationName?: string;
 }
 
 export function CourseCertificate({
@@ -24,6 +26,8 @@ export function CourseCertificate({
   courseTitle,
   completionDate,
   adminSignature = "LearnHub Administration",
+  logoUrl,
+  organizationName = "LearnHub",
 }: CourseCertificateProps) {
   const certificateRef = useRef<HTMLDivElement>(null);
 
@@ -68,9 +72,18 @@ export function CourseCertificate({
           <div className="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 border-primary/40 rounded-br-lg" />
 
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-              <Award className="w-10 h-10 text-white" />
-            </div>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt="Certificate Logo"
+                className="w-20 h-20 object-contain"
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                <Award className="w-10 h-10 text-white" />
+              </div>
+            )}
 
             <div>
               <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-800 tracking-wide">
@@ -112,7 +125,7 @@ export function CourseCertificate({
             </div>
 
             <div className="text-xs text-gray-400 mt-4">
-              LearnHub • Online Learning Platform
+              {organizationName} • Online Learning Platform
             </div>
           </div>
         </div>

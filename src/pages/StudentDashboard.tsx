@@ -34,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMyEnrollments, useEnrollInCourse } from "@/hooks/useEnrollments";
 import { usePublishedCourses } from "@/hooks/useCourses";
 import { CourseCertificate } from "@/components/CourseCertificate";
+import { useCertificateSettings } from "@/hooks/useCertificateSettings";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
@@ -59,6 +60,7 @@ const StudentDashboard = () => {
   const { signOut, user } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useMyEnrollments();
   const { data: allCourses, isLoading: coursesLoading } = usePublishedCourses();
+  const { data: certificateSettings } = useCertificateSettings();
   const enrollInCourse = useEnrollInCourse();
 
   // Handle enrollment from URL param
@@ -567,6 +569,9 @@ const StudentDashboard = () => {
           studentName={user?.user_metadata?.full_name || user?.email || "Student"}
           courseTitle={selectedCertificate.courseTitle}
           completionDate={selectedCertificate.completionDate}
+          adminSignature={certificateSettings?.signature_name}
+          logoUrl={certificateSettings?.logo_url}
+          organizationName={certificateSettings?.organization_name}
         />
       )}
     </div>
