@@ -277,15 +277,24 @@ const CourseDetail = () => {
                   )}
                 </div>
               </div>
-              {isEnrolled && isPaymentApproved && activeLesson && !completedLessons.has(activeLesson.id) && (
-                <Button 
-                  onClick={() => handleLessonComplete(activeLesson.id)}
-                  className="flex-shrink-0"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Mark Complete
-                </Button>
-              )}
+              {isEnrolled && isPaymentApproved && activeLesson && !completedLessons.has(activeLesson.id) && (() => {
+                // Check if all previous lessons are completed
+                const activeLessonIndex = lessons?.findIndex(l => l.id === activeLesson.id) ?? -1;
+                const previousLessons = lessons?.slice(0, activeLessonIndex) ?? [];
+                const allPreviousCompleted = previousLessons.every(l => completedLessons.has(l.id));
+                
+                return (
+                  <Button 
+                    onClick={() => handleLessonComplete(activeLesson.id)}
+                    className="flex-shrink-0"
+                    disabled={!allPreviousCompleted}
+                    title={!allPreviousCompleted ? "Complete previous lessons first" : undefined}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Mark Complete
+                  </Button>
+                );
+              })()}
               {isEnrolled && activeLesson && completedLessons.has(activeLesson.id) && (
                 <Badge variant="default" className="flex items-center gap-1 px-3 py-2">
                   <CheckCircle className="w-4 h-4" />
