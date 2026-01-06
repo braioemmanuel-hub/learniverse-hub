@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { usePublishedCourses } from "@/hooks/useCourses";
 import { useLandingContent } from "@/hooks/useLandingContent";
+import AnimatedHeroBanner from "@/components/AnimatedHeroBanner";
 
 const features = [
   {
@@ -143,45 +144,13 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        <div className="container mx-auto relative">
-          <div className="max-w-3xl mx-auto text-center animate-fade-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Star className="w-4 h-4 fill-current" />
-              <span>{heroContent.badge}</span>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6">
-              {heroContent.title.includes("World-Class") ? (
-                <>
-                  {heroContent.title.split("World-Class")[0]}
-                  <span className="text-primary">World-Class</span>
-                  {heroContent.title.split("World-Class")[1]}
-                </>
-              ) : (
-                heroContent.title
-              )}
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              {heroContent.subtitle}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/auth">
-                <Button variant="hero" size="xl">
-                  {heroContent.cta_primary}
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link to="/courses">
-                <Button variant="outline" size="xl">
-                  <Play className="w-5 h-5" />
-                  {heroContent.cta_secondary}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <AnimatedHeroBanner
+        badge={heroContent.badge}
+        title={heroContent.title}
+        subtitle={heroContent.subtitle}
+        ctaPrimary={heroContent.cta_primary}
+        ctaSecondary={heroContent.cta_secondary}
+      />
 
       {/* Stats Section */}
       <section className="py-12 px-6 bg-card border-y border-border">
