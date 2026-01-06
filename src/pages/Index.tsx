@@ -19,6 +19,7 @@ import {
 import { usePublishedCourses } from "@/hooks/useCourses";
 import { useLandingContent } from "@/hooks/useLandingContent";
 import AnimatedHeroBanner from "@/components/AnimatedHeroBanner";
+import AnimatedCourseCard from "@/components/AnimatedCourseCard";
 
 const features = [
   {
@@ -228,42 +229,9 @@ const Index = () => {
               <p className="text-muted-foreground">We're working on adding amazing courses for you</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-8">
               {displayCourses.map((course, index) => (
-                <div 
-                  key={course.id}
-                  className={`group rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-up animation-delay-${(index + 1) * 100}`}
-                >
-                  <div className="relative overflow-hidden">
-                    <img 
-                      src={course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"} 
-                      alt={course.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {course.category && (
-                      <div className="absolute top-3 left-3">
-                        <span className="px-3 py-1 rounded-full bg-card/90 backdrop-blur-sm text-xs font-medium">
-                          {course.category}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                      {course.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-3">{course.instructor_name}</p>
-                    {course.duration && (
-                      <p className="text-sm text-muted-foreground mb-4">{course.duration}</p>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-foreground">${Number(course.price).toFixed(2)}</span>
-                      <Link to={`/auth?redirect=/student&enroll=${course.id}`}>
-                        <Button size="sm">Enroll Now</Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                <AnimatedCourseCard key={course.id} course={course} index={index} />
               ))}
             </div>
           )}
