@@ -67,7 +67,7 @@ const testimonials = [
     name: "Sarah Johnson",
     role: "Software Developer",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    quote: "LearnHub transformed my career. The courses are practical and the instructors are amazing.",
+    quote: "Heros Academy transformed my career. The courses are practical and the instructors are amazing.",
   },
   {
     name: "Michael Chen",
@@ -105,7 +105,7 @@ const Index = () => {
   };
 
   const statsContent = content?.stats || stats;
-  const featuresContent = content?.features || { title: "Why Choose LearnHub?", subtitle: "We're committed to providing the best learning experience possible", items: features.map(f => ({ title: f.title, description: f.description })) };
+  const featuresContent = content?.features || { title: "Why Choose Heros Academy?", subtitle: "We're committed to providing the best learning experience possible", items: features.map(f => ({ title: f.title, description: f.description })) };
   const testimonialsContent = content?.testimonials || { title: "What Our Students Say", subtitle: "Join thousands of satisfied learners who have transformed their careers", items: testimonials };
   const ctaContent = content?.cta || { title: "Ready to Transform Your Career?", subtitle: "Join thousands of learners who have already taken the first step. Start your learning journey today with unlimited access.", button_text: "Get Started Free" };
 
@@ -118,7 +118,7 @@ const Index = () => {
             <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">LearnHub</span>
+            <span className="text-xl font-bold text-foreground">Heros Academy</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-8">
@@ -408,7 +408,7 @@ const Index = () => {
                 <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
                   <BookOpen className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <span className="font-bold text-foreground">LearnHub</span>
+                <span className="font-bold text-foreground">Heros Academy</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Empowering learners worldwide with quality education and expert instruction.
@@ -441,7 +441,7 @@ const Index = () => {
           </div>
           <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 LearnHub. All rights reserved.
+              © 2024 Heros Academy. All rights reserved.
             </p>
           </div>
         </div>

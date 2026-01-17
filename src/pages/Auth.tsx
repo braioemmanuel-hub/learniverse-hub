@@ -127,7 +127,7 @@ export default function Auth() {
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center gap-2 mb-4">
               <GraduationCap className="w-10 h-10 text-primary" />
-              <span className="text-2xl font-display font-bold text-foreground">LearnHub</span>
+              <span className="text-2xl font-display font-bold text-foreground">Heros Academy</span>
             </div>
             <CardTitle className="text-2xl font-display">
               {isLogin ? 'Welcome Back' : 'Create Account'}

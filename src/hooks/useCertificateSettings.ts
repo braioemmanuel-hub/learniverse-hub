@@ -9,9 +9,9 @@ export interface CertificateSettings {
 }
 
 const defaultSettings: CertificateSettings = {
-  signature_name: "LearnHub Administration",
+  signature_name: "Heros Academy Administration",
   logo_url: null,
-  organization_name: "LearnHub",
+  organization_name: "Heros Academy",
 };
 
 export function useCertificateSettings() {
