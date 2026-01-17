@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import logo from "@/assets/logo.png";
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,9 +126,8 @@ export default function Auth() {
         
         <Card className="border-border/50 shadow-elegant bg-card/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <GraduationCap className="w-10 h-10 text-primary" />
-              <span className="text-2xl font-display font-bold text-foreground">Heros Academy</span>
+            <div className="flex items-center justify-center mb-4">
+              <img src={logo} alt="Heros Academy" className="h-12" />
             </div>
             <CardTitle className="text-2xl font-display">
               {isLogin ? 'Welcome Back' : 'Create Account'}
