@@ -25,9 +25,9 @@ export function CourseCertificate({
   studentName,
   courseTitle,
   completionDate,
-  adminSignature = "LearnHub Administration",
+  adminSignature = "Heros Academy Administration",
   logoUrl,
-  organizationName = "LearnHub",
+  organizationName = "Heros Academy",
 }: CourseCertificateProps) {
   const certificateRef = useRef<HTMLDivElement>(null);
 

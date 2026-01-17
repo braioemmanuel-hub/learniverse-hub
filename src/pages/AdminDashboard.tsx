@@ -99,9 +99,9 @@ const AdminDashboard = () => {
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [certSettings, setCertSettings] = useState<CertificateSettings>({
-    signature_name: "LearnHub Administration",
+    signature_name: "Heros Academy Administration",
     logo_url: null,
-    organization_name: "LearnHub",
+    organization_name: "Heros Academy",
   });
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
@@ -273,7 +273,7 @@ const AdminDashboard = () => {
                 <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
                   <BookOpen className="w-5 h-5 text-primary-foreground" />
                 </div>
-                <span className="font-bold text-foreground">LearnHub</span>
+                <span className="font-bold text-foreground">Heros Academy</span>
               </Link>
             )}
             <Button
@@ -903,7 +903,7 @@ const AdminDashboard = () => {
                     <Label htmlFor="organization-name">Organization Name</Label>
                     <Input
                       id="organization-name"
-                      placeholder="e.g., LearnHub Academy"
+                      placeholder="e.g., Heros Academy"
                       value={certSettings.organization_name}
                       onChange={(e) => setCertSettings({ ...certSettings, organization_name: e.target.value })}
                     />

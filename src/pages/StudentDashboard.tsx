@@ -131,7 +131,7 @@ const StudentDashboard = () => {
                 <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
                   <BookOpen className="w-5 h-5 text-primary-foreground" />
                 </div>
-                <span className="font-bold text-foreground">LearnHub</span>
+                <span className="font-bold text-foreground">Heros Academy</span>
               </Link>
             )}
             <Button

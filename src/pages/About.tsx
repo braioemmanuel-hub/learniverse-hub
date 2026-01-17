@@ -65,7 +65,7 @@ const About = () => {
             <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">LearnHub</span>
+            <span className="text-xl font-bold text-foreground">Heros Academy</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
@@ -98,7 +98,7 @@ const About = () => {
             Empowering Learners Worldwide
           </h1>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            LearnHub was founded with a simple mission: to make quality education accessible to everyone. 
+            Heros Academy was founded with a simple mission: to make quality education accessible to everyone. 
             We believe that learning has the power to transform lives and create opportunities.
           </p>
         </div>
@@ -125,7 +125,7 @@ const About = () => {
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-6">Our Story</h2>
               <p className="text-muted-foreground mb-4">
-                Founded in 2020, LearnHub started as a small project to help people learn new skills 
+                Founded in 2020, Heros Academy started as a small project to help people learn new skills 
                 during the pandemic. What began as a simple idea quickly grew into a global platform 
                 serving learners from over 150 countries.
               </p>
@@ -197,7 +197,7 @@ const About = () => {
               Ready to Start Learning?
             </h2>
             <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-              Join thousands of learners who have transformed their careers with LearnHub.
+              Join thousands of learners who have transformed their careers with Heros Academy.
             </p>
             <Link to="/auth">
               <Button variant="accent" size="lg">
@@ -217,9 +217,9 @@ const About = () => {
               <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-bold text-foreground">LearnHub</span>
+              <span className="font-bold text-foreground">Heros Academy</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2024 LearnHub. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">© 2024 Heros Academy. All rights reserved.</p>
           </div>
         </div>
       </footer>
